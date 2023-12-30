@@ -16,7 +16,8 @@
     // Internet connectivity.
     .dependencies = .{
         .stack = .{
-            .path = "../Stack",
+            .url = "https://github.com/hdert/zig-stack/archive/refs/tags/v1.0.0.tar.gz",
+            .hash = "1220ffbb6d4e675938d37d03de3ccc74a778dc83396f2091fc047ce3ce1e69fb7cab",
         },
         // See `zig fetch --save <url>` for a command-line interface for adding dependencies.
         //.example = .{
