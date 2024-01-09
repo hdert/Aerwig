@@ -6,6 +6,8 @@ index: usize,
 const State = enum {
     float,
     float_decimals,
+    float_e_notation_start,
+    float_e_notation,
     keyword,
     start,
 };
@@ -79,6 +81,10 @@ pub fn next(self: *Self) Token {
             .float => switch (c) {
                 '0'...'9' => continue,
                 '.' => state = .float_decimals,
+                'e' => {
+                    state = .float_e_notation_start;
+                    result.tag = .invalid_float;
+                },
                 else => break,
             },
             .float_decimals => switch (c) {
@@ -88,6 +94,25 @@ pub fn next(self: *Self) Token {
                     result.tag = .invalid_float;
                     break;
                 },
+                'e' => {
+                    state = .float_e_notation_start;
+                    result.tag = .invalid_float;
+                },
+                else => break,
+            },
+            .float_e_notation_start => switch (c) {
+                '0'...'9' => {
+                    state = .float_e_notation;
+                    result.tag = .float;
+                },
+                '+', '-' => {
+                    state = .float_e_notation;
+                    result.tag = .invalid_float;
+                },
+                else => break,
+            },
+            .float_e_notation => switch (c) {
+                '0'...'9' => result.tag = .float,
                 else => break,
             },
             .keyword => switch (c) {

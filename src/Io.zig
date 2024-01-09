@@ -150,7 +150,7 @@ pub fn handleError(
             "Mismatched parentheses!\n",
         ),
         E.InvalidFloat => try stdout.writeAll(
-            "You cannot have more than one period in a floating point number\n",
+            "You have entered an invalid number\n",
         ),
         E.FnUnexpectedArgSize => try stdout.writeAll(
             "You haven't passed the correct number of arguments to this function\n",
