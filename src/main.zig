@@ -12,20 +12,17 @@ pub fn main() !void {
     var result: f64 = 0;
     var buffer: [1000]u8 = undefined;
     const io = Io.init(stdout, stdin);
-    var equation = try Calculator.Equation.init(
+    var calculator = try Calculator.init(
         allocator,
-        null,
-        null,
+        &.{ Io.registerKeywords, Addons.registerKeywords },
     );
-    defer equation.free();
-    try Io.registerKeywords(&equation);
-    try Addons.registerKeywords(&equation);
+    defer calculator.free();
 
     try io.defaultHelp();
     while (true) {
-        try equation.registerPreviousAnswer(result);
+        try calculator.registerPreviousAnswer(result);
         const infixEquation = io.getInputFromUser(
-            equation,
+            calculator,
             buffer[0..],
         ) catch |err| switch (err) {
             Io.Error.Help => continue,

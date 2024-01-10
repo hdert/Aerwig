@@ -201,8 +201,9 @@ fn infixEquationFromStringTest(alloc: Allocator) !void {
         "1e +30",  "1e -20",     "1.e",
         "1.e+",    "1.e-",       "1.e+1+",
     };
-    var eq = try c.Equation.init(alloc, &.{"e"}, &.{c.KeywordInfo{ .Constant = std.math.e }});
+    var eq = try c.init(alloc, null);
     defer eq.free();
+    try eq.addKeywords(&.{"e"}, &.{c.KeywordInfo{ .Constant = std.math.e }});
     try eq.registerPreviousAnswer(0);
     for (test_cases.infix_equations, 0..) |case, i| {
         const result = eq.newInfixEquation(case, null) catch |err| {
@@ -237,7 +238,7 @@ test "InfixEquation.fromString" {
 }
 
 fn infixEquationToPostfixEquationTest(alloc: Allocator) !void {
-    var eq = try c.Equation.init(alloc, null, null);
+    var eq = try c.init(alloc, null, null);
     defer eq.free();
     for (
         test_cases.infix_equations,
@@ -264,8 +265,9 @@ test "InfixEquation.toPostfixEquation" {
 }
 
 fn infixEquationEvaluateTest(alloc: Allocator) !void {
-    var eq = try c.Equation.init(alloc, &.{"e"}, &.{c.KeywordInfo{ .Constant = std.math.e }});
+    var eq = try c.init(alloc, null);
     defer eq.free();
+    try eq.addKeywords(&.{"e"}, &.{c.KeywordInfo{ .Constant = std.math.e }});
     for (
         test_cases.infix_equations,
         test_cases.inputs,
@@ -295,7 +297,7 @@ test "InfixEquation.evaluate" {
 }
 
 fn postfixEquationEvaluateTestPass(alloc: std.mem.Allocator) !void {
-    var eq = try c.Equation.init(allocator, null, null);
+    var eq = try c.init(allocator, null);
     defer eq.free();
     for (
         test_cases.postfix_equations,
@@ -319,7 +321,7 @@ fn postfixEquationEvaluateTestPass(alloc: std.mem.Allocator) !void {
 }
 
 fn postfixEquationEvaluateTestFail(alloc: std.mem.Allocator) !void {
-    var eq = try c.Equation.init(allocator, null, null);
+    var eq = try c.init(allocator, null);
     defer eq.free();
     const fail_cases = [_][]const u8{
         "10 0 /",       "10 0 %",

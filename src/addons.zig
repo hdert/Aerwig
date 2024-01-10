@@ -5,7 +5,7 @@
 const std = @import("std");
 const Cal = @import("Calculator");
 
-pub fn registerKeywords(equation: *Cal.Equation) !void {
+pub fn registerKeywords(equation: *Cal) !void {
     try equation.addKeywords(&[_][]const u8{
         "sqrt",  "abs", "exp",     "exp2",
         "gcd",   "sin", "asin",    "sinh",

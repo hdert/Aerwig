@@ -27,7 +27,7 @@ pub fn init(stdout: std.fs.File.Writer, stdin: std.fs.File.Reader) Self {
     };
 }
 
-pub fn registerKeywords(equation: *Cal.Equation) !void {
+pub fn registerKeywords(equation: *Cal) !void {
     try equation.addKeywords(&[_][]const u8{
         "h",
         "help",
@@ -65,7 +65,7 @@ pub fn printResult(self: Self, result: f64) !void {
 /// The caller ensures equation.stdout is not null
 pub fn getInputFromUser(
     self: Self,
-    equation: Cal.Equation,
+    equation: Cal,
     buffer: []u8,
 ) !Cal.InfixEquation {
     while (true) {
@@ -109,60 +109,7 @@ pub fn handleError(
     equation: ?[]const u8,
 ) !void {
     const stdout = self.stdout;
-    const E = Cal.Error;
-    switch (err) {
-        E.InvalidOperator,
-        E.Comma,
-        => try stdout.writeAll(
-            "You have entered an invalid operator\n",
-        ),
-        E.InvalidKeyword => try stdout.writeAll(
-            "You have entered an invalid keyword\n",
-        ),
-        E.DivisionByZero => try stdout.writeAll(
-            "Cannot divide by zero\n",
-        ),
-        E.EmptyInput => try stdout.writeAll(
-            "You cannot have an empty input\n",
-        ),
-        E.SequentialOperators => try stdout.writeAll(
-            "You cannot enter sequential operators\n",
-        ),
-        E.EndsWithOperator => try stdout.writeAll(
-            "You cannot finish with an operator\n",
-        ),
-        E.StartsWithOperator => try stdout.writeAll(
-            "You cannot start with an operator\n",
-        ),
-        E.ParenEmptyInput => try stdout.writeAll(
-            "You cannot have an empty parenthesis block\n",
-        ),
-        E.ParenStartsWithOperator => try stdout.writeAll(
-            "You cannot start a parentheses block with an operator\n",
-        ),
-        E.ParenEndsWithOperator => try stdout.writeAll(
-            "You cannot end a parentheses block with an operator\n",
-        ),
-        E.ParenMismatched,
-        E.ParenMismatchedClose,
-        E.ParenMismatchedStart,
-        => try stdout.writeAll(
-            "Mismatched parentheses!\n",
-        ),
-        E.InvalidFloat => try stdout.writeAll(
-            "You have entered an invalid number\n",
-        ),
-        E.FnUnexpectedArgSize => try stdout.writeAll(
-            "You haven't passed the correct number of arguments to this function\n",
-        ),
-        E.FnArgBoundsViolated => try stdout.writeAll(
-            "Your arguments aren't within the range that this function expected\n",
-        ),
-        E.FnArgInvalid => try stdout.writeAll(
-            "Your argument to this function is invalid\n",
-        ),
-        else => return err,
-    }
+    try stdout.writeAll(try Cal.errorDescription(err));
     if (location) |l| {
         switch (err) {
             Cal.Error.DivisionByZero, Cal.Error.EmptyInput => {},
@@ -180,7 +127,7 @@ pub fn handleError(
 }
 
 /// This doesn't work very well, maybe a function help module would be nicer?
-pub fn printKeywords(self: Self, equation: Cal.Equation) !void {
+pub fn printKeywords(self: Self, equation: Cal) !void {
     var iterator = equation.keywords.iterator();
     while (true) {
         const entry = iterator.next() orelse break;
