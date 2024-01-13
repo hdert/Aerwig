@@ -36,7 +36,7 @@ pub fn evaluate(self: Self) !f64 {
     var tokens = std.mem.tokenizeScalar(u8, self.data, ' ');
     while (tokens.next()) |token| {
         switch (token[token.len - 1]) {
-            '0'...'9', '.' => {
+            '0'...'9', '.', 'f', 'n' => {
                 try stack.push(try std.fmt.parseFloat(f64, token));
             },
             else => {

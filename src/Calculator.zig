@@ -94,7 +94,7 @@ pub fn errorDescription(err: anyerror) anyerror![]const u8 {
         => "You have entered an invalid operator\n",
         E.InvalidKeyword => "You have entered an invalid keyword\n",
         E.DivisionByZero => "You cannot divide by zero\n",
-        E.EmptyInput => "You cannot have an empty input",
+        E.EmptyInput => "You cannot have an empty input\n",
         E.SequentialOperators => "You cannot enter sequential operators\n",
         E.EndsWithOperator => "You cannot finish with an operator\n",
         E.StartsWithOperator => "You cannot start with an operator\n",
@@ -170,7 +170,18 @@ pub fn init(
     if (KeywordRegistrars) |registrars|
         for (registrars) |registrar|
             try registrar(&self);
+    try self.registerKeywords();
     return self;
+}
+
+pub fn registerKeywords(self: *Self) !void {
+    try self.addKeywords(&.{
+        "inf",
+        "nan",
+    }, &.{
+        .{ .Constant = std.math.inf(f64) },
+        .{ .Constant = std.math.nan(f64) },
+    });
 }
 
 pub fn addKeywords(self: *Self, keys: []const []const u8, values: []const KeywordInfo) !void {
