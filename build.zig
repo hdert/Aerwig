@@ -42,7 +42,7 @@ pub fn build(b: *std.Build) !void {
 
     for (targets) |t| {
         const exe = b.addExecutable(.{
-            .name = "Calculator",
+            .name = try std.fmt.allocPrint(b.allocator, "Calculator-{s}", .{try t.zigTriple(b.allocator)}),
             .root_source_file = .{ .path = "src/main.zig" },
             .target = t,
             .optimize = .ReleaseSafe,
