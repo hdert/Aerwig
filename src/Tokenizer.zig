@@ -1,7 +1,7 @@
 const Self = @This();
 
 buffer: []const u8,
-index: usize,
+index: usize = 0,
 
 const State = enum {
     float,
@@ -15,7 +15,6 @@ const State = enum {
 pub fn init(buffer: []const u8) Self {
     return Self{
         .buffer = buffer,
-        .index = 0,
     };
 }
 
