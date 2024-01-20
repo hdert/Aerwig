@@ -124,6 +124,15 @@ pub fn build(b: *std.Build) !void {
         //     null,
         // });
         // Working version, but may run tests twice
+        const clear_kcov_output = if (@import("builtin").os.tag == .windows) b.addSystemCommand(&.{
+            "rmdir",
+            "/s",
+            "kcov-output",
+        }) else b.addSystemCommand(&.{
+            "rm",
+            "-r",
+            "kcov-output",
+        });
         const lib_unit_tests_run_kcov = b.addSystemCommand(&.{
             "kcov",
             "--exclude-path=/usr/lib/zig/lib/",
@@ -137,6 +146,9 @@ pub fn build(b: *std.Build) !void {
 
         lib_unit_tests_run_kcov.addArtifactArg(lib_unit_tests);
         calc_unit_tests_run_kcov.addArtifactArg(calc_unit_tests);
+
+        lib_unit_tests_run_kcov.step.dependOn(&clear_kcov_output.step);
+        calc_unit_tests_run_kcov.step.dependOn(&clear_kcov_output.step);
 
         test_step.dependOn(&lib_unit_tests_run_kcov.step);
         test_step.dependOn(&calc_unit_tests_run_kcov.step);
