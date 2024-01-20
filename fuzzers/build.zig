@@ -1,6 +1,6 @@
 /// Heavy inspiration from https://www.ryanliptak.com/blog/fuzzing-zig-code/
 /// Run command to fuzz (may not require environment variables on your system):
-/// AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 afl-fuzz -t 5 -i input -o output -- zig-out/lib/infixEquation_fuzz
+/// AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 afl-fuzz -t 5 -x dictionary/InfixEquation.dict -i input -o output -- zig-out/lib/infixEquation_fuzz
 const std = @import("std");
 
 pub fn build(b: *std.Build) !void {
