@@ -101,25 +101,50 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
+    // Creating test step
+
+    const test_step = b.step("test", "Run unit tests");
+
     // Adding option to generate test coverage
 
     const coverage = b.option(bool, "test-coverage", "Generate test coverage");
     if (coverage) |_| {
         // Currently doesn't work https://github.com/ziglang/zig/issues/17756
         // Workaround in runKcov.sh
-        lib_unit_tests.setExecCmd(&[_]?[]const u8{
+        // lib_unit_tests.setExecCmd(&[_]?[]const u8{
+        //     "kcov",
+        //     "--exclude-path=/usr/lib/zig/lib/",
+        //     "kcov-output",
+        //     null,
+        // });
+        // calc_unit_tests.setExecCmd(&.{
+        //     "kcov",
+        //     "--exclude-path=/usr/lib/zig/lib",
+        //     "kcov-output",
+        //     null,
+        // });
+        // Working version, but may run tests twice
+        const lib_unit_tests_run_kcov = b.addSystemCommand(&.{
             "kcov",
-            "--exclude-path=/usr/lib/zig/lib/,src/tests.zig,src/Tokenizer.zig,src/Io.zig,src/addons.zig,../Stack/src/",
+            "--exclude-path=/usr/lib/zig/lib/",
             "kcov-output",
-            null,
         });
+        const calc_unit_tests_run_kcov = b.addSystemCommand(&.{
+            "kcov",
+            "--exclude-path=/usr/lib/zig/lib/",
+            "kcov-output",
+        });
+
+        lib_unit_tests_run_kcov.addArtifactArg(lib_unit_tests);
+        calc_unit_tests_run_kcov.addArtifactArg(calc_unit_tests);
+
+        test_step.dependOn(&lib_unit_tests_run_kcov.step);
+        test_step.dependOn(&calc_unit_tests_run_kcov.step);
+    } else {
+        // Create test run step
+        const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
+        const run_calc_unit_tests = b.addRunArtifact(calc_unit_tests);
+        test_step.dependOn(&run_lib_unit_tests.step);
+        test_step.dependOn(&run_calc_unit_tests.step);
     }
-
-    // Creating test run step
-
-    const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
-    const run_calc_unit_tests = b.addRunArtifact(calc_unit_tests);
-    const test_step = b.step("test", "Run unit tests");
-    test_step.dependOn(&run_lib_unit_tests.step);
-    test_step.dependOn(&run_calc_unit_tests.step);
 }

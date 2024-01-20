@@ -5,28 +5,12 @@
 //!     - Depends on whether the code ever changes, and whether
 //!     the public method testing covers it.
 //! - Find way to do performance testing
-//! - Merge InfixEquation and PostfixEquation into one Equation struct
-//!     - This needs to done to make the code less awkward for the next part
-//!     - But does it?
-//!     - This has allowed me to keep a stable ABI despite numerous backend changes
-//!     - I don't think this is necessary, I can just keep copying data
-//!     - Something else needs to be done to organize the code though
-//! - Find way to do fuzzing
-//!     - Fuzzing doesn't have to include input, but it needs to be both
-//!     end-to-end, and unit based to also check function interaction.
-//!     - Fuzzing should be 'smart' i.e. checking which code paths have and
-//!     haven't been triggered
-//!     - Fuzzing should check if non-internal or non-expected errors are thrown
-//!     or that asserts have failed or unreachables have been reached.
-//!     - Current testing already tests that valid input works, and invalid input
-//!     doesn't, we just want to check for UB and crashes.
 //! - Find way to do end-to-end testing with custom file reader
 //!     - Use result generator and writer to test entire user text
 //!     to ensure that it never changes, and if it does, to highlight it
 //!     - This will finally include error results and error types
 //!     - Integrate this with fuzzing
 //!     - Use std.testing.tmpDir
-//! - Performance testing
 
 const std = @import("std");
 const Stack = @import("Stack");
@@ -206,4 +190,8 @@ pub fn newInfixEquation(self: Self, input: ?[]const u8, error_handler: anytype) 
 
 pub fn free(self: *Self) void {
     self.keywords.deinit();
+}
+
+test "PostfixEquation" {
+    _ = PostfixEquation;
 }
