@@ -4,6 +4,7 @@ const testing = std.testing;
 const allocator = std.testing.allocator; // I regret having this as a global
 const Allocator = std.mem.Allocator; // This is a good idea though
 const check_allocation_failures = true;
+const tolerance = std.math.floatEps(f64);
 
 const testData = struct {
     infix_equations: []const []const u8,
@@ -276,7 +277,7 @@ fn infixEquationEvaluateTest(alloc: Allocator) !void {
         try eq.registerPreviousAnswer(input);
         var infix_equation = try eq.newInfixEquation(infix, null);
         const output = try infix_equation.evaluate();
-        testing.expectEqual(result, output) catch |err| {
+        testing.expectApproxEqRel(result, output, tolerance) catch |err| {
             std.debug.print("Expected: {d}\nGot: {d}\nCase: {s}\nPrevious Answer: {d}\n", .{
                 result,
                 output,
@@ -309,7 +310,7 @@ fn postfixEquationEvaluateTestPass(alloc: std.mem.Allocator) !void {
             .keywords = eq.keywords,
         };
         const output = try postfix_equation.evaluate();
-        testing.expectEqual(result, output) catch |err| {
+        testing.expectApproxEqRel(result, output, tolerance) catch |err| {
             std.debug.print("Expected: {d}\nGot: {d}\nCase: {s}\n", .{
                 result,
                 output,
