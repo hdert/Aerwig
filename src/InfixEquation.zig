@@ -1,8 +1,9 @@
 const std = @import("std");
-const stack = @import("Stack");
+const Stack = @import("Stack");
 const Tokenizer = @import("Tokenizer");
 const Calculator = @import("Calculator.zig");
 const Error = Calculator.Error;
+const Operator = Calculator.Operator;
 const PostfixEquation = @import("PostfixEquation.zig");
 
 const Self = @This();
@@ -188,4 +189,214 @@ fn validateInput(self: *Self, input: ?[]const u8) !void {
     self.data = std.mem.trim(u8, self.data, " ");
     var tokens = Tokenizer.init(self.data);
     try self.validateArgument(&tokens);
+}
+
+// Evaluate
+
+fn addOperatorToStack(
+    input_stack: *Stack.Stack(Operator),
+    operator: Operator,
+    output_stack: *Stack.Stack(f64),
+) !void {
+    while (input_stack.len() > 0 and try input_stack.peek().higherOrEqual(operator)) {
+        std.debug.assert(input_stack.len() > 0);
+        try evaluateOperator(output_stack, input_stack.pop());
+    }
+    try input_stack.push(operator);
+}
+
+fn findArgumentEnd(tokens: *Tokenizer) Tokenizer.Token {
+    var paren_counter: isize = 0;
+    while (true) {
+        const token = tokens.next();
+        std.log.debug("{any}", .{token.tag});
+        switch (token.tag) {
+            .comma => if (paren_counter == 0) return token,
+            .left_paren => paren_counter += 1,
+            .right_paren => {
+                paren_counter -= 1;
+                if (paren_counter < 0) {
+                    return token;
+                }
+            },
+            // Our equation has been validated, so cannot return in invalid state
+            .eol => unreachable,
+            else => continue,
+        }
+    }
+}
+
+fn evaluateKeyword(self: Self, tokens: *Tokenizer, token_slice: []const u8) anyerror!f64 {
+    const keyword = self.keywords.get(token_slice).?;
+    switch (keyword) {
+        .Command => unreachable,
+        .Function => |info| {
+            _ = tokens.next();
+            var args = std.ArrayList(f64).init(self.allocator);
+            defer args.deinit();
+            while (true) {
+                const start = tokens.next().start;
+                const token = findArgumentEnd(tokens);
+                std.log.debug("'{s}'", .{tokens.buffer[start..token.start]});
+
+                const infix = Self{
+                    .data = tokens.buffer[start..token.start],
+                    .allocator = self.allocator,
+                    .keywords = self.keywords,
+                };
+                try args.append(try infix.evaluate());
+                if (token.tag == .right_paren) break;
+            }
+            const arg_slice = try args.toOwnedSlice();
+            defer self.allocator.free(arg_slice);
+            return info.ptr(arg_slice);
+        },
+        .StrFunction => |ptr| {
+            _ = tokens.next();
+            const start = tokens.next().start;
+            var end: usize = undefined;
+            while (true) {
+                const token = tokens.next();
+                if (token.tag == .right_paren) {
+                    end = token.start;
+                    break;
+                }
+            }
+            return ptr(tokens.buffer[start..end]);
+        },
+        .Constant => |data| return data,
+    }
+}
+
+fn evaluateOperator(stack: *Stack.Stack(f64), operator: Operator) !void {
+    const value = stack.pop();
+    if (calculate(stack.pop(), value, @intFromEnum(operator))) |result| {
+        try stack.push(result);
+    } else |err| {
+        switch (err) {
+            Error.DivisionByZero => return err,
+            else => unreachable,
+        }
+    }
+}
+
+fn calculate(number_1: f64, number_2: f64, operator: u8) Error!f64 {
+    return switch (@as(Operator, @enumFromInt(operator))) {
+        Operator.addition => number_1 + number_2,
+        Operator.subtraction => number_1 - number_2,
+        Operator.division => if (number_2 == 0) Error.DivisionByZero else number_1 / number_2,
+        Operator.multiplication => number_1 * number_2,
+        Operator.exponentiation => std.math.pow(f64, number_1, number_2),
+        Operator.modulus => if (number_2 <= 0) Error.DivisionByZero else @mod(number_1, number_2),
+        else => Error.InvalidOperator,
+    };
+}
+
+pub fn evaluate_experimental(self: Self) !f64 {
+    var conversion_stack = Stack.Stack(Operator).init(self.allocator);
+    defer conversion_stack.free();
+    var evaluation_stack = Stack.Stack(f64).init(self.allocator);
+    defer evaluation_stack.free();
+    var tokens = Tokenizer.init(self.data);
+    const State = enum { none, negative, float };
+    var state = State.none;
+    while (true) {
+        const token = tokens.next();
+        switch (token.tag) {
+            .eol => break,
+            .float => {
+                const starts_with_dot = token.slice[0] == '.';
+                const number_string = if (starts_with_dot)
+                    try std.fmt.allocPrint(self.allocator, "0{s}", .{token.slice})
+                else
+                    token.slice;
+                defer if (starts_with_dot) self.allocator.free(number_string);
+                const number = try std.fmt.parseFloat(f64, number_string);
+                switch (state) {
+                    .none => try evaluation_stack.push(number),
+                    .negative => try evaluation_stack.push(-number),
+                    .float => {
+                        try addOperatorToStack(
+                            &conversion_stack,
+                            .multiplication,
+                            &evaluation_stack,
+                        );
+                        try evaluation_stack.push(number);
+                    },
+                }
+                state = .float;
+            },
+            .keyword => {
+                const result = try self.evaluateKeyword(&tokens, token.slice);
+                switch (state) {
+                    .none => try evaluation_stack.push(result),
+                    .negative => try evaluation_stack.push(-result),
+                    .float => {
+                        try addOperatorToStack(
+                            &conversion_stack,
+                            .multiplication,
+                            &evaluation_stack,
+                        );
+                        try evaluation_stack.push(result);
+                    },
+                }
+                state = .float;
+            },
+            .minus => switch (state) {
+                .none => state = .negative,
+                .negative => state = .none,
+                .float => {
+                    state = .none;
+                    try addOperatorToStack(
+                        &conversion_stack,
+                        .subtraction,
+                        &evaluation_stack,
+                    );
+                },
+            },
+            .left_paren => {
+                switch (state) {
+                    .none => {},
+                    .negative => {
+                        try evaluation_stack.push(-1);
+                        try addOperatorToStack(
+                            &conversion_stack,
+                            .multiplication,
+                            &evaluation_stack,
+                        );
+                    },
+                    .float => {
+                        try addOperatorToStack(
+                            &conversion_stack,
+                            .multiplication,
+                            &evaluation_stack,
+                        );
+                    },
+                }
+                state = .none;
+                try conversion_stack.push(.left_paren);
+            },
+            .right_paren => {
+                while (conversion_stack.peek() != Operator.left_paren) {
+                    try evaluateOperator(&evaluation_stack, conversion_stack.pop());
+                }
+                _ = conversion_stack.pop();
+                state = .float;
+            },
+            .operator => {
+                try addOperatorToStack(
+                    &conversion_stack,
+                    @enumFromInt(token.slice[0]),
+                    &evaluation_stack,
+                );
+                state = .none;
+            },
+            else => unreachable,
+        }
+    }
+    while (conversion_stack.len() > 0) {
+        try evaluateOperator(&evaluation_stack, conversion_stack.pop());
+    }
+    std.debug.assert(evaluation_stack.len() == 1);
+    return evaluation_stack.pop();
 }

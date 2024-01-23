@@ -238,6 +238,81 @@ test "InfixEquation.fromString" {
     }
 }
 
+fn infixEquationEvaluateExperimentalTest(alloc: Allocator) !void {
+    const verify_fail_cases = [_]?[]const u8{
+        "-",       "10++10",     "10(*10)",
+        "10(10*)", "10*",        "10(10)*",
+        "()",      "10()",       "21 + 2 ) * ( 5 / 6",
+        "10.789.", "10.789.123", "10..",
+        "",        "-",          "-0.-",
+        "10-",     "--",         ".-",
+        ". -. -",  null,         "1(",
+        "(",       "      ",     "()",
+        "(*",      "asdf",       "aa",
+        "aa a",    "a aa",       "aaa",
+        "10-*10",  "_",          "+",
+        ")",       "(",          "(1",
+        "æ",      ")",          "1)",
+        ",",       "\x00",       "(,)",
+        "1+,",     "-,",         "1,",
+        "1),",     "(1,)",       "1e",
+        "1e +30",  "1e -20",     "1.e",
+        "1.e+",    "1.e-",       "1.e+1+",
+    };
+    const evaluate_fail_cases = [_][]const u8{
+        "10 / 0",       "10 % 0",
+        "10 10 10 - /", "10 % (10 - 10)",
+        "10 / 0",       "10 % 0",
+    };
+    var eq = try c.init(alloc, null);
+    defer eq.free();
+    try eq.addKeywords(&.{"e"}, &.{c.KeywordInfo{ .Constant = std.math.e }});
+    try eq.registerPreviousAnswer(0);
+    for (test_cases.infix_equations, test_cases.results, test_cases.inputs, 0..) |case, result, inputs, i| {
+        try eq.registerPreviousAnswer(inputs);
+        const output = eq.evaluate_experimental(case, null) catch |err| {
+            if (err != Allocator.Error.OutOfMemory)
+                std.debug.print("\nNumber: {d}", .{i});
+            return err;
+        };
+        try testing.expectApproxEqRel(result, output, tolerance);
+    }
+    for (verify_fail_cases, 0..) |case, i| {
+        if (eq.evaluate_experimental(case, null)) |_| {
+            std.debug.print("\nNumber: {d}\n", .{i});
+            return error.NotFail;
+        } else |err| {
+            switch (err) {
+                c.Error.InvalidOperator,
+                c.Error.DivisionByZero,
+                => return error.UnexpectedError,
+                else => {
+                    if (!c.isError(err)) return error.InvalidError;
+                },
+            }
+        }
+    }
+    for (evaluate_fail_cases) |case| {
+        const result = eq.evaluate_experimental(case, null);
+        if (result) |_| {
+            return error.NotFail;
+        } else |err| {
+            switch (err) {
+                Allocator.Error.OutOfMemory => return err,
+                else => {},
+            }
+        }
+    }
+}
+
+test "InfixEquation.evaluate_experimental" {
+    if (check_allocation_failures) {
+        try testing.checkAllAllocationFailures(allocator, infixEquationEvaluateExperimentalTest, .{});
+    } else {
+        try infixEquationEvaluateExperimentalTest(allocator);
+    }
+}
+
 fn infixEquationToPostfixEquationTest(alloc: Allocator) !void {
     var eq = try c.init(alloc, null, null);
     defer eq.free();

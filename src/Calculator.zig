@@ -11,8 +11,6 @@
 //!     - This will finally include error results and error types
 //!     - Integrate this with fuzzing
 //!     - Use std.testing.tmpDir
-//! - Implement conversion and evaluation one-step algorithm and do performance
-//!     comparison.
 
 const std = @import("std");
 const Stack = @import("Stack");
@@ -170,7 +168,11 @@ pub fn registerKeywords(self: *Self) !void {
     });
 }
 
-pub fn addKeywords(self: *Self, keys: []const []const u8, values: []const KeywordInfo) !void {
+pub fn addKeywords(
+    self: *Self,
+    keys: []const []const u8,
+    values: []const KeywordInfo,
+) !void {
     for (keys, values) |key, value|
         try self.keywords.put(key, value);
 }
@@ -186,8 +188,35 @@ pub fn registerPreviousAnswer(self: *Self, prev_ans: f64) !void {
     );
 }
 
-pub fn newInfixEquation(self: Self, input: ?[]const u8, error_handler: anytype) !InfixEquation {
-    return InfixEquation.fromString(input, self.allocator, self.keywords, error_handler);
+pub fn newInfixEquation(
+    self: Self,
+    input: ?[]const u8,
+    error_handler: anytype,
+) !InfixEquation {
+    return InfixEquation.fromString(
+        input,
+        self.allocator,
+        self.keywords,
+        error_handler,
+    );
+}
+
+pub fn evaluate(self: Self, input: ?[]const u8, error_handler: anytype) !f64 {
+    return (try InfixEquation.fromString(
+        input,
+        self.allocator,
+        self.keywords,
+        error_handler,
+    )).evaluate();
+}
+
+pub fn evaluate_experimental(self: Self, input: ?[]const u8, error_handler: anytype) !f64 {
+    return (try InfixEquation.fromString(
+        input,
+        self.allocator,
+        self.keywords,
+        error_handler,
+    )).evaluate_experimental();
 }
 
 pub fn free(self: *Self) void {

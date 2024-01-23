@@ -28,15 +28,13 @@ pub fn init(equation: InfixEquation) !Self {
 }
 
 /// Evaluate a postfix expression.
-/// If PostfixEquation has a valid stdout, prints errors to it using printError.
-/// Passes errors back to caller regardless of stdout being defined.
 pub fn evaluate(self: Self) !f64 {
     var stack = Stack.Stack(f64).init(self.allocator);
     defer stack.free();
     var tokens = std.mem.tokenizeScalar(u8, self.data, ' ');
     while (tokens.next()) |token| {
         switch (token[token.len - 1]) {
-            '0'...'9', '.', 'f', 'n' => {
+            '0'...'9', '.', 'f', 'n' => { // inf and nan
                 try stack.push(try std.fmt.parseFloat(f64, token));
             },
             else => {
@@ -47,7 +45,6 @@ pub fn evaluate(self: Self) !f64 {
                 } else |err| {
                     switch (err) {
                         Error.DivisionByZero => {
-                            // if (self.stdout) |out| try Io.printError(err, out, null, null);
                             return err;
                         },
                         else => unreachable,
