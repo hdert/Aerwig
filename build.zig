@@ -35,8 +35,9 @@ pub fn build(b: *std.Build) !void {
     // Creating cross-compilation builds
 
     for (targets) |t| {
+        const zig_triple = try t.zigTriple(b.allocator);
         const exe = b.addExecutable(.{
-            .name = try std.fmt.allocPrint(b.allocator, "Calculator-{s}", .{try t.zigTriple(b.allocator)}),
+            .name = try std.fmt.allocPrint(b.allocator, "Calculator-{s}", .{zig_triple}),
             .root_source_file = .{ .path = "src/main.zig" },
             .target = b.resolveTargetQuery(t),
             .optimize = .ReleaseSafe,
@@ -48,37 +49,39 @@ pub fn build(b: *std.Build) !void {
         const target_output = b.addInstallArtifact(exe, .{
             .dest_dir = .{
                 .override = .{
-                    .custom = try t.zigTriple(b.allocator),
+                    .custom = zig_triple,
                 },
             },
         });
         b.getInstallStep().dependOn(&target_output.step);
     }
 
-    // Creating Native build
+    // Creating Native build and Native build step
 
-    const exe = b.addExecutable(.{
+    const native_exe = b.addExecutable(.{
         .name = "Calculator",
         .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = optimize,
     });
-    exe.root_module.addImport("Io", io);
-    exe.root_module.addImport("Addons", addons);
-    exe.root_module.addImport("Calculator", calculator);
-    const target_output = b.addInstallArtifact(exe, .{
+    native_exe.root_module.addImport("Io", io);
+    native_exe.root_module.addImport("Addons", addons);
+    native_exe.root_module.addImport("Calculator", calculator);
+    const native_exe_output = b.addInstallArtifact(native_exe, .{
         .dest_dir = .{
             .override = .{
                 .custom = try target.query.zigTriple(b.allocator),
             },
         },
     });
-    b.getInstallStep().dependOn(&target_output.step);
+    b.getInstallStep().dependOn(&native_exe_output.step);
+    const native_build_step = b.step("native", "Build only the native executable");
+    native_build_step.dependOn(&native_exe_output.step);
 
     // Creating executable run step
 
-    const run_cmd = b.addRunArtifact(exe);
-    run_cmd.step.dependOn(&target_output.step);
+    const run_cmd = b.addRunArtifact(native_exe);
+    run_cmd.step.dependOn(&native_exe_output.step);
 
     if (b.args) |args| {
         run_cmd.addArgs(args);
@@ -159,4 +162,30 @@ pub fn build(b: *std.Build) !void {
         test_step.dependOn(&run_lib_unit_tests.step);
         test_step.dependOn(&run_calc_unit_tests.step);
     }
+
+    // Create Fuzzing step
+    // Heavy inspiration from https://www.ryanliptak.com/blog/fuzzing-zig-code/
+    // Run command to fuzz (may not require environment variables on your system):
+    // AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 afl-fuzz -t 5 -x dictionary/InfixEquation.dict -i input -o output -- zig-out/lib/infixEquation_fuzz
+    // Graph results with
+    // afl-plot output/default/ graph/
+
+    const InfixEquationFuzzer = b.addStaticLibrary(.{
+        .name = "InfixEquationFuzzer",
+        .root_source_file = .{ .path = "fuzzers/src/InfixEquation.zig" },
+        .target = target,
+        .optimize = .Debug,
+        .pic = true,
+    });
+    InfixEquationFuzzer.want_lto = true;
+    InfixEquationFuzzer.bundle_compiler_rt = true;
+    InfixEquationFuzzer.root_module.addImport("Calculator", calculator);
+
+    const InfixEquationFuzzer_install = b.addInstallArtifact(InfixEquationFuzzer, .{});
+    const InfixEquationFuzzer_compile = b.addSystemCommand(&.{ "afl-clang-lto", "-o", "zig-out/lib/infixEquationFuzzer" });
+    InfixEquationFuzzer_compile.addArtifactArg(InfixEquationFuzzer);
+    InfixEquationFuzzer_compile.step.dependOn(&InfixEquationFuzzer_install.step);
+
+    const fuzz_compile = b.step("fuzz", "Build executables for fuzz testing using afl-clang-lto");
+    fuzz_compile.dependOn(&InfixEquationFuzzer_compile.step);
 }

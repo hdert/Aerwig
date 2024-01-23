@@ -11,6 +11,8 @@
 //!     - This will finally include error results and error types
 //!     - Integrate this with fuzzing
 //!     - Use std.testing.tmpDir
+//! - Implement conversion and evaluation one-step algorithm and do performance
+//!     comparison.
 
 const std = @import("std");
 const Stack = @import("Stack");
