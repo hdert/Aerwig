@@ -22,13 +22,9 @@ pub fn main() !void {
 
     var calc = try calculator.init(allocator, null);
     defer calc.free();
-    const infix_equation = calc.newInfixEquation(data, null) catch return;
-    // _ = infix_equation.evaluate();
-    var postfix_equation = try infix_equation.toPostfixEquation();
-    defer postfix_equation.free();
 
-    _ = postfix_equation.evaluate() catch |err| switch (err) {
-        calculator.Error.DivisionByZero => return,
-        else => return err,
+    _ = calc.evaluate_experimental(data, null) catch |err| {
+        if (calculator.isError(err)) return;
+        return err;
     };
 }
