@@ -165,10 +165,6 @@ pub fn build(b: *std.Build) !void {
 
     // Create Fuzzing step
     // Heavy inspiration from https://www.ryanliptak.com/blog/fuzzing-zig-code/
-    // Run command to fuzz (may not require environment variables on your system):
-    // AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 afl-fuzz -t 5 -x dictionary/InfixEquation.dict -i input -o output -- zig-out/lib/infixEquation_fuzz
-    // Graph results with
-    // afl-plot output/default/ graph/
 
     const InfixEquationFuzzer = b.addStaticLibrary(.{
         .name = "InfixEquationFuzzer",
@@ -188,4 +184,37 @@ pub fn build(b: *std.Build) !void {
 
     const fuzz_compile = b.step("fuzz", "Build executables for fuzz testing using afl-clang-lto");
     fuzz_compile.dependOn(&InfixEquationFuzzer_compile.step);
+
+    // Create Fuzzing Run step
+
+    const InfixEquationFuzzer_run = b.addSystemCommand(&.{
+        "afl-fuzz",
+        "-t",
+        "5",
+        "-x",
+        "fuzzers/dictionary/InfixEquation.dict",
+        "-i",
+        "fuzzers/input",
+        "-o",
+        "afl-output",
+        "--",
+        "zig-out/lib/infixEquationFuzzer",
+    });
+    InfixEquationFuzzer_run.setEnvironmentVariable("AFL_SKIP_CPUFREQ", "1");
+    InfixEquationFuzzer_run.setEnvironmentVariable("AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES", "1");
+    InfixEquationFuzzer_run.step.dependOn(&InfixEquationFuzzer_compile.step);
+
+    const fuzz_run = b.step("fuzz-run", "Build executables for fuzz testing using afl-clang-lto, then run them with afl++");
+    fuzz_run.dependOn(&InfixEquationFuzzer_run.step);
+
+    // Create Graph Creation Step
+
+    const fuzz_graph_cmd = b.addSystemCommand(&.{
+        "afl-plot",
+        "afl-output/default/",
+        "afl-graph-output/",
+    });
+
+    const fuzz_graph = b.step("fuzz-graph", "Graph the results of running the fuzzer");
+    fuzz_graph.dependOn(&fuzz_graph_cmd.step);
 }
