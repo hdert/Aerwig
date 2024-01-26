@@ -1,9 +1,14 @@
+//! TODO:
+//! - Add support for command line input with clap
 const std = @import("std");
 const Calculator = @import("Calculator");
 const Io = @import("Io");
 const Addons = @import("Addons");
+const tracy = @import("tracy.zig");
 
 pub fn main() !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     const stdout = std.io.getStdOut().writer();
     const stdin = std.io.getStdIn().reader();
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

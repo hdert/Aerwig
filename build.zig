@@ -78,6 +78,9 @@ pub fn build(b: *std.Build) !void {
     const native_build_step = b.step("native", "Build only the native executable");
     native_build_step.dependOn(&native_exe_output.step);
 
+    const native_exe_options = b.addOptions();
+    native_exe.root_module.addOptions("build_options", native_exe_options);
+
     // Creating executable run step
 
     const run_cmd = b.addRunArtifact(native_exe);
@@ -230,4 +233,34 @@ pub fn build(b: *std.Build) !void {
     const example_install = b.addInstallArtifact(example_exe, .{});
 
     b.getInstallStep().dependOn(&example_install.step);
+
+    // Tracy
+    // From: https://github.com/ziglang/zig/blob/master/build.zig
+
+    const tracy = b.option(bool, "tracy", "Enable Tracy integration") orelse false;
+    const tracy_callstack = b.option(bool, "tracy-callstack", "Include callstack information with Tracy data. Does nothing if -Dtracy is not provided") orelse tracy;
+    const tracy_allocation = b.option(bool, "tracy-allocation", "Include allocation information with Tracy data. Does nothing if -Dtracy is not provided") orelse tracy;
+
+    native_exe_options.addOption(bool, "enable_tracy", tracy);
+    native_exe_options.addOption(bool, "enable_tracy_callstack", tracy_callstack);
+    native_exe_options.addOption(bool, "enable_tracy_allocation", tracy_allocation);
+
+    if (tracy) {
+        const client_cpp = "src/tracy/public/TracyClient.cpp";
+
+        // ON mingw, we need to opt into windows 7+ to get some features required by tracy.
+        const tracy_c_flags: []const []const u8 = if (target.result.isMinGW())
+            &[_][]const u8{ "-DTRACY_ENABLE=1", "-fno-sanitize=undefined", "-D_WIN32_WINNT=0x601" }
+        else
+            &[_][]const u8{ "-DTRACY_ENABLE=1", "-fno-sanitize=undefined" };
+        native_exe.addIncludePath(.{ .cwd_relative = "src/tracy" });
+        native_exe.addCSourceFile(.{ .file = .{ .cwd_relative = client_cpp }, .flags = tracy_c_flags });
+        native_exe.linkLibCpp();
+        native_exe.linkLibC();
+
+        if (target.result.os.tag == .windows) {
+            native_exe.linkSystemLibrary("dbghelp");
+            native_exe.linkSystemLibrary("ws2_32");
+        }
+    }
 }
