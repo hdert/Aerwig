@@ -1,6 +1,6 @@
 //! Must be freed due to hashmap
 //! Initialize an instance with init(), free with free().
-//! Create new InfixEquation with newInfixEqutaion(), or
+//! Create new InfixEquation with newInfixEquation(), or
 //! evaluate directly with evaluate().
 //! Add custom keywords (constants, functions, commands) with addKeywords().
 //! TODO:
