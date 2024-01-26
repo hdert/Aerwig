@@ -1,5 +1,8 @@
 //! Must be freed due to hashmap
-//! Initialize an instance with init, free with free.
+//! Initialize an instance with init(), free with free().
+//! Create new InfixEquation with newInfixEqutaion(), or
+//! evaluate directly with evaluate().
+//! Add custom keywords (constants, functions, commands) with addKeywords().
 //! TODO:
 //! - Create tests for Tokenizer
 //!     - Depends on whether the code ever changes, and whether

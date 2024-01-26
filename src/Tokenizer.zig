@@ -1,3 +1,6 @@
+//! Tokenizes arithmetic expressions.
+//! Use by calling fn init([]const u8) Tokenizer
+//! Then call next() to get next token.
 const Self = @This();
 
 buffer: []const u8,

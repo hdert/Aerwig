@@ -1,4 +1,15 @@
-//! Addon functions for the calculator
+//! Addon functions and constants for the calculator
+//! Include functions with fn registerKeywords(*Calculator) !void
+//! Adds the following functions:
+//! "sqrt",  "abs", "exp",     "exp2",
+//! "gcd",   "sin", "asin",    "sinh",
+//! "asinh", "cos", "acos",    "cosh",
+//! "acosh", "tan", "atan",    "tanh",
+//! "atanh", "log", "log2",    "log10",
+//! "ln",    "sum", "average", "median",
+//! "mode",  "min", "max",
+//! And the following constants:
+//! "pi",    "e",   "tau",
 //! TODO:
 //! - Write unit tests for non-standard functions
 //! - Write end-to-end testing for addons
@@ -51,28 +62,28 @@ pub fn registerKeywords(equation: *Cal) !void {
 
 // Math functions
 
-fn sqrt(i: []const f64) !f64 {
+pub fn sqrt(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.sqrt(i[0]);
 }
 
-fn abs(i: []const f64) !f64 {
+pub fn abs(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return if (i[0] < 0) -i[0] else i[0];
 }
 
-fn exp(i: []const f64) !f64 {
+pub fn exp(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.exp(i[0]);
 }
 
-fn exp2(i: []const f64) !f64 {
+pub fn exp2(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.exp2(i[0]);
 }
 
 /// TODO: Write unit test
-fn gcd(i: []const f64) !f64 {
+pub fn gcd(i: []const f64) !f64 {
     std.debug.assert(i.len == 2);
     if (i[0] <= 0 or
         i[1] <= 0 or
@@ -94,78 +105,78 @@ fn gcd(i: []const f64) !f64 {
 
 // Trigonometry functions
 
-fn sin(i: []const f64) !f64 {
+pub fn sin(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.sin(i[0]);
 }
 
-fn asin(i: []const f64) !f64 {
+pub fn asin(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.asin(i[0]);
 }
 
-fn sinh(i: []const f64) !f64 {
+pub fn sinh(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.sinh(i[0]);
 }
 
-fn asinh(i: []const f64) !f64 {
+pub fn asinh(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.asinh(i[0]);
 }
 
-fn cos(i: []const f64) !f64 {
+pub fn cos(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.cos(i[0]);
 }
 
-fn acos(i: []const f64) !f64 {
+pub fn acos(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.acos(i[0]);
 }
 
-fn cosh(i: []const f64) !f64 {
+pub fn cosh(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.cosh(i[0]);
 }
-fn acosh(i: []const f64) !f64 {
+pub fn acosh(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.acosh(i[0]);
 }
 
-fn tan(i: []const f64) !f64 {
+pub fn tan(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.tan(i[0]);
 }
 
-fn atan(i: []const f64) !f64 {
+pub fn atan(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.atan(i[0]);
 }
 
-fn tanh(i: []const f64) !f64 {
+pub fn tanh(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.tanh(i[0]);
 }
 
-fn atanh(i: []const f64) !f64 {
+pub fn atanh(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.atanh(i[0]);
 }
 
-fn log(i: []const f64) !f64 {
+pub fn log(i: []const f64) !f64 {
     std.debug.assert(i.len == 2);
     return std.math.log(f64, i[0], i[1]);
 }
-fn log2(i: []const f64) !f64 {
+pub fn log2(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.log2(i[0]);
 }
-fn log10(i: []const f64) !f64 {
+pub fn log10(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.log10(i[0]);
 }
-fn ln(i: []const f64) !f64 {
+pub fn ln(i: []const f64) !f64 {
     std.debug.assert(i.len == 1);
     return std.math.log(f64, std.math.e, i[0]);
 }
@@ -173,7 +184,7 @@ fn ln(i: []const f64) !f64 {
 // Statistics functions
 
 /// TODO: Write unit test
-fn sum(i: []const f64) !f64 {
+pub fn sum(i: []const f64) !f64 {
     std.debug.assert(i.len > 0);
     var s: f64 = 0;
     for (i) |j| {
@@ -201,7 +212,7 @@ test "sum" {
 }
 
 /// TODO: Write unit test
-fn average(i: []const f64) !f64 {
+pub fn average(i: []const f64) !f64 {
     std.debug.assert(i.len > 0);
     return try sum(i) / @as(f64, @floatFromInt(i.len));
 }
@@ -224,7 +235,7 @@ test "average" {
 }
 
 /// TODO: Write unit test
-fn median(i: []f64) !f64 {
+pub fn median(i: []f64) !f64 {
     std.debug.assert(i.len > 0);
     const half_len = i.len / 2;
     std.sort.heap(f64, i, {}, std.sort.asc(f64));
@@ -235,7 +246,7 @@ fn median(i: []f64) !f64 {
 }
 
 /// TODO: Write unit test
-fn mode(i: []f64) !f64 {
+pub fn mode(i: []f64) !f64 {
     std.debug.assert(i.len > 0);
     std.sort.heap(f64, i, {}, std.sort.asc(f64));
     var longest_length: usize = 0;
@@ -258,7 +269,7 @@ fn mode(i: []f64) !f64 {
 }
 
 /// TODO: Write unit test
-fn min(i: []const f64) !f64 {
+pub fn min(i: []const f64) !f64 {
     std.debug.assert(i.len > 0);
     var smallest = i[0];
     for (i) |j| {
@@ -268,7 +279,7 @@ fn min(i: []const f64) !f64 {
 }
 
 /// TODO: Write unit test
-fn max(i: []const f64) !f64 {
+pub fn max(i: []const f64) !f64 {
     std.debug.assert(i.len > 0);
     var biggest = i[0];
     for (i) |j| {

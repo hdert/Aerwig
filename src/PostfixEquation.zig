@@ -1,4 +1,8 @@
 //! Must be freed
+//! Struct that holds a RPN (Reverse Polish Notation) representation
+//! of an expression, and methods to manipulate it.
+//! Create with init() which accepts an InfixEquation.
+//! Evaluate expression with evaluate().
 const std = @import("std");
 const testing = std.testing;
 const Stack = @import("Stack");

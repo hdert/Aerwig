@@ -1,3 +1,8 @@
+//! Holds a validated infix notation expression.
+//! Create and validate with fromString().
+//! Convert to PostfixEquation with toPostfixEquation().
+//! Evaluate with evaluate(), which will convert to PostfixEquation, then evaluate.
+//! Or you can call evaluate_experimental() to do one step evaluation.
 const std = @import("std");
 const Stack = @import("Stack");
 const Tokenizer = @import("Tokenizer");

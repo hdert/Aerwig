@@ -1,4 +1,15 @@
 //! All calculator and library helper functions that deal with IO.
+//! This function adds these commands:
+//! "h",
+//! "help",
+//! "exit",
+//! "leave",
+//! "return",
+//! "quit",
+//! "q",
+//! "close",
+//! "keywords",
+//! It is recommended to handle these with defaultHelp, and printKeywords
 //! This module is nearly entirely untested, due to it's nature, so extra
 //! scrutiny is advised and required.
 //! TODO:
@@ -62,7 +73,7 @@ pub fn printResult(self: Self, result: f64) !void {
     }
 }
 
-/// The caller ensures equation.stdout is not null
+/// The caller ensures calculator.stdout is not null
 pub fn getInputFromUser(
     self: Self,
     equation: Cal,
@@ -153,7 +164,7 @@ pub fn printKeywords(self: Self, equation: Cal) !void {
 /// Print out a nice default help.
 pub fn defaultHelp(self: Self) !void {
     try self.stdout.writeAll(
-        \\General Purpose Calculator, written in Zig by Justin, © 2023-2024
+        \\Aerwig, An Expression Evaluator, Written In Zig, by Justin, © 2023-2024
         \\This calculator supports the standard order of operations, with the
         \\exception of the ordering of powers '^', these are ordered left-to-
         \\-right, unlike most calculators which order them right-to-left.
