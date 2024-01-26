@@ -113,7 +113,6 @@ pub fn build(b: *std.Build) !void {
     const coverage = b.option(bool, "test-coverage", "Generate test coverage");
     if (coverage) |_| {
         // Currently doesn't work https://github.com/ziglang/zig/issues/17756
-        // Workaround in runKcov.sh
         // lib_unit_tests.setExecCmd(&[_]?[]const u8{
         //     "kcov",
         //     "--exclude-path=/usr/lib/zig/lib/",
@@ -126,7 +125,7 @@ pub fn build(b: *std.Build) !void {
         //     "kcov-output",
         //     null,
         // });
-        // Working version, but may run tests twice
+        // Workaround, but may run tests twice
         const clear_kcov_output = if (@import("builtin").os.tag == .windows) b.addSystemCommand(&.{
             "rmdir",
             "/s",
