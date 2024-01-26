@@ -217,4 +217,18 @@ pub fn build(b: *std.Build) !void {
 
     const fuzz_graph = b.step("fuzz-graph", "Graph the results of running the fuzzer");
     fuzz_graph.dependOn(&fuzz_graph_cmd.step);
+
+    // Example
+
+    const example_exe = b.addExecutable(.{
+        .name = "example",
+        .root_source_file = .{ .path = "src/example.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    example_exe.root_module.addImport("Calculator", calculator);
+    example_exe.root_module.addImport("Addons", addons);
+    const example_install = b.addInstallArtifact(example_exe, .{});
+
+    b.getInstallStep().dependOn(&example_install.step);
 }

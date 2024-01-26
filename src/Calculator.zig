@@ -1,5 +1,5 @@
-//! A library for taking in user equations and evaluating them.
 //! Must be freed due to hashmap
+//! Initialize an instance with init, free with free.
 //! TODO:
 //! - Create tests for Tokenizer
 //!     - Depends on whether the code ever changes, and whether
