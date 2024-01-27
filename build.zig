@@ -78,9 +78,9 @@ pub fn build(b: *std.Build) !void {
     const native_build_step = b.step("native", "Build only the native executable");
     native_build_step.dependOn(&native_exe_output.step);
 
-    const native_exe_options = b.addOptions();
-    native_exe.root_module.addOptions("build_options", native_exe_options);
-    calculator.addOptions("build_options", native_exe_options);
+    const calculator_options = b.addOptions();
+    // native_exe.root_module.addOptions("build_options", calculator_options);
+    calculator.addOptions("build_options", calculator_options);
 
     // Creating executable run step
 
@@ -242,9 +242,9 @@ pub fn build(b: *std.Build) !void {
     const tracy_callstack = b.option(bool, "tracy-callstack", "Include callstack information with Tracy data. Does nothing if -Dtracy is not provided") orelse tracy;
     const tracy_allocation = b.option(bool, "tracy-allocation", "Include allocation information with Tracy data. Does nothing if -Dtracy is not provided") orelse tracy;
 
-    native_exe_options.addOption(bool, "enable_tracy", tracy);
-    native_exe_options.addOption(bool, "enable_tracy_callstack", tracy_callstack);
-    native_exe_options.addOption(bool, "enable_tracy_allocation", tracy_allocation);
+    calculator_options.addOption(bool, "enable_tracy", tracy);
+    calculator_options.addOption(bool, "enable_tracy_callstack", tracy_callstack);
+    calculator_options.addOption(bool, "enable_tracy_allocation", tracy_allocation);
 
     if (tracy) {
         const client_cpp = "src/tracy/public/TracyClient.cpp";
@@ -254,14 +254,40 @@ pub fn build(b: *std.Build) !void {
             &[_][]const u8{ "-DTRACY_ENABLE=1", "-fno-sanitize=undefined", "-D_WIN32_WINNT=0x601" }
         else
             &[_][]const u8{ "-DTRACY_ENABLE=1", "-fno-sanitize=undefined" };
-        native_exe.addIncludePath(.{ .cwd_relative = "src/tracy" });
-        native_exe.addCSourceFile(.{ .file = .{ .cwd_relative = client_cpp }, .flags = tracy_c_flags });
-        native_exe.linkLibCpp();
-        native_exe.linkLibC();
+        // native_exe.addIncludePath(.{ .cwd_relative = "src/tracy" });
+        calculator.addIncludePath(.{ .cwd_relative = "src/tracy" });
+        // native_exe.addCSourceFile(.{ .file = .{ .cwd_relative = client_cpp }, .flags = tracy_c_flags });
+        calculator.addCSourceFile(.{ .file = .{ .cwd_relative = client_cpp }, .flags = tracy_c_flags });
+        // native_exe.linkLibCpp();
+        calculator.link_libcpp = true;
+        // native_exe.linkLibC();
+        calculator.link_libc = true;
 
         if (target.result.os.tag == .windows) {
-            native_exe.linkSystemLibrary("dbghelp");
-            native_exe.linkSystemLibrary("ws2_32");
+            // native_exe.linkSystemLibrary("dbghelp")
+            calculator.linkSystemLibrary("dbghelp", .{});
+            // native_exe.linkSystemLibrary("ws2_32");
+            calculator.linkSystemLibrary("ws2_32", .{});
         }
     }
+
+    // Loop for performance testing
+    const test_performance = b.step("perf", "Test performance with Tracy");
+
+    const loop_use_next = b.option(bool, "perf_use_next", "Use the next feature for performance testing");
+    const loop_options = b.addOptions();
+    loop_options.addOption(bool, "use_next", loop_use_next orelse false);
+
+    const loop_exe = b.addExecutable(.{
+        .name = "loop",
+        .root_source_file = .{ .path = "src/performance_testing/loop.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    loop_exe.root_module.addImport("Calculator", calculator);
+    loop_exe.root_module.addImport("Addons", addons);
+    loop_exe.root_module.addImport("build_options", loop_options.createModule());
+
+    const loop_run = b.addRunArtifact(loop_exe);
+    test_performance.dependOn(&loop_run.step);
 }

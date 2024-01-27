@@ -4,7 +4,6 @@ const std = @import("std");
 const Calculator = @import("Calculator");
 const Io = @import("Io");
 const Addons = @import("Addons");
-const tracy = Calculator.tracy;
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();

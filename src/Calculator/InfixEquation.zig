@@ -269,7 +269,7 @@ fn evaluateKeyword(self: Self, tokens: *Tokenizer, token_slice: []const u8) anye
                     .allocator = self.allocator,
                     .keywords = self.keywords,
                 };
-                try args.append(try infix.evaluate());
+                try args.append(try infix.evaluate_experimental());
                 if (token.tag == .right_paren) break;
             }
             const arg_slice = try args.toOwnedSlice();
