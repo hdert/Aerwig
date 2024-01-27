@@ -33,10 +33,7 @@ pub fn main() !void {
     var timer = try std.time.Timer.start();
     while (loops > 0) : (loops -= 1) {
         try calculator.registerPreviousAnswer(
-            if (use_next)
-                try calculator.evaluate_experimental(input, err_handler)
-            else
-                try calculator.evaluate(input, err_handler),
+            try calculator.evaluate(input, err_handler),
         );
     }
     const time = timer.read();

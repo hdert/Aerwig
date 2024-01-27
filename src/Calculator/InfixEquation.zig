@@ -1,8 +1,7 @@
 //! Holds a validated infix notation expression.
 //! Create and validate with fromString().
 //! Convert to PostfixEquation with toPostfixEquation().
-//! Evaluate with evaluate(), which will convert to PostfixEquation, then evaluate.
-//! Or you can call evaluate_experimental() to do one step evaluation.
+//! Evaluate with evaluate(), which will convert and evaluate in one step.
 const std = @import("std");
 const Stack = @import("Stack");
 const Tokenizer = @import("Tokenizer.zig");
@@ -16,7 +15,6 @@ const tracy = @import("tracy.zig");
 const Self = @This();
 
 data: []const u8,
-// stdout: ?std.fs.File.Writer = null,
 allocator: std.mem.Allocator,
 keywords: std.StringHashMap(KeywordInfo),
 error_info: ?[3]usize = null,
@@ -54,19 +52,6 @@ pub fn toPostfixEquation(self: Self) !PostfixEquation {
     const tracy_zone = tracy.trace(@src());
     defer tracy_zone.end();
     return PostfixEquation.init(self);
-}
-
-/// Evaluate an infix expression.
-/// This chains together a bunch of library functions to do this.
-/// previousAnswer defaults to 0
-/// If InfixEquation has a valid stdout, prints errors to it using printError.
-/// Passes errors back to caller regardless of stdout being defined.
-pub fn evaluate(self: Self) !f64 {
-    const tracy_zone = tracy.trace(@src());
-    defer tracy_zone.end();
-    const postfixEquation = try self.toPostfixEquation();
-    defer postfixEquation.free();
-    return postfixEquation.evaluate();
 }
 
 // Private functions
@@ -269,7 +254,7 @@ fn evaluateKeyword(self: Self, tokens: *Tokenizer, token_slice: []const u8) anye
                     .allocator = self.allocator,
                     .keywords = self.keywords,
                 };
-                try args.append(try infix.evaluate_experimental());
+                try args.append(try infix.evaluate());
                 if (token.tag == .right_paren) break;
             }
             const arg_slice = try args.toOwnedSlice();
@@ -321,7 +306,8 @@ fn calculate(number_1: f64, number_2: f64, operator: u8) Error!f64 {
     };
 }
 
-pub fn evaluate_experimental(self: Self) !f64 {
+/// Evaluates an infix expression.
+pub fn evaluate(self: Self) !f64 {
     const tracy_zone = tracy.trace(@src());
     defer tracy_zone.end();
     var conversion_stack = Stack.Stack(Operator).init(self.allocator);

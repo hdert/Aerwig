@@ -12,10 +12,6 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const stack = b.dependency("stack", .{});
-    // const tokenizer = b.addModule(
-    //     "Tokenizer",
-    //     .{ .root_source_file = .{ .path = "src/Tokenizer.zig" } },
-    // );
     const calculator = b.addModule("Calculator", .{
         .root_source_file = .{ .path = "src/Calculator.zig" },
     });
@@ -254,19 +250,13 @@ pub fn build(b: *std.Build) !void {
             &[_][]const u8{ "-DTRACY_ENABLE=1", "-fno-sanitize=undefined", "-D_WIN32_WINNT=0x601" }
         else
             &[_][]const u8{ "-DTRACY_ENABLE=1", "-fno-sanitize=undefined" };
-        // native_exe.addIncludePath(.{ .cwd_relative = "src/tracy" });
         calculator.addIncludePath(.{ .cwd_relative = "src/tracy" });
-        // native_exe.addCSourceFile(.{ .file = .{ .cwd_relative = client_cpp }, .flags = tracy_c_flags });
         calculator.addCSourceFile(.{ .file = .{ .cwd_relative = client_cpp }, .flags = tracy_c_flags });
-        // native_exe.linkLibCpp();
         calculator.link_libcpp = true;
-        // native_exe.linkLibC();
         calculator.link_libc = true;
 
         if (target.result.os.tag == .windows) {
-            // native_exe.linkSystemLibrary("dbghelp")
             calculator.linkSystemLibrary("dbghelp", .{});
-            // native_exe.linkSystemLibrary("ws2_32");
             calculator.linkSystemLibrary("ws2_32", .{});
         }
     }

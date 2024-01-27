@@ -270,7 +270,7 @@ fn infixEquationEvaluateExperimentalTest(alloc: Allocator) !void {
     try eq.registerPreviousAnswer(0);
     for (test_cases.infix_equations, test_cases.results, test_cases.inputs, 0..) |case, result, inputs, i| {
         try eq.registerPreviousAnswer(inputs);
-        const output = eq.evaluate_experimental(case, null) catch |err| {
+        const output = eq.evaluate(case, null) catch |err| {
             if (err != Allocator.Error.OutOfMemory)
                 std.debug.print("\nNumber: {d}", .{i});
             return err;
@@ -278,7 +278,7 @@ fn infixEquationEvaluateExperimentalTest(alloc: Allocator) !void {
         try testing.expectApproxEqRel(result, output, tolerance);
     }
     for (verify_fail_cases, 0..) |case, i| {
-        if (eq.evaluate_experimental(case, null)) |_| {
+        if (eq.evaluate(case, null)) |_| {
             std.debug.print("\nNumber: {d}\n", .{i});
             return error.NotFail;
         } else |err| {
@@ -293,7 +293,7 @@ fn infixEquationEvaluateExperimentalTest(alloc: Allocator) !void {
         }
     }
     for (evaluate_fail_cases) |case| {
-        const result = eq.evaluate_experimental(case, null);
+        const result = eq.evaluate(case, null);
         if (result) |_| {
             return error.NotFail;
         } else |err| {
@@ -305,7 +305,7 @@ fn infixEquationEvaluateExperimentalTest(alloc: Allocator) !void {
     }
 }
 
-test "InfixEquation.evaluate_experimental" {
+test "InfixEquation.evaluate_indepth" {
     if (check_allocation_failures) {
         try testing.checkAllAllocationFailures(allocator, infixEquationEvaluateExperimentalTest, .{});
     } else {

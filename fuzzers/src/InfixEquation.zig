@@ -23,7 +23,7 @@ pub fn main() !void {
     var calc = try calculator.init(allocator, null);
     defer calc.free();
 
-    _ = calc.evaluate_experimental(data, null) catch |err| {
+    _ = calc.evaluate(data, null) catch |err| {
         if (calculator.isError(err)) return;
         return err;
     };

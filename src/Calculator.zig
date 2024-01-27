@@ -113,17 +113,6 @@ pub fn evaluate(self: Self, input: ?[]const u8, error_handler: anytype) !f64 {
     )).evaluate();
 }
 
-pub fn evaluate_experimental(self: Self, input: ?[]const u8, error_handler: anytype) !f64 {
-    const tracy_zone = tracy.trace(@src());
-    defer tracy_zone.end();
-    return (try InfixEquation.fromString(
-        input,
-        self.allocator,
-        self.keywords,
-        error_handler,
-    )).evaluate_experimental();
-}
-
 pub fn free(self: *Self) void {
     const tracy_zone = tracy.trace(@src());
     defer tracy_zone.end();
