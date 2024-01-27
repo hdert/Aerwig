@@ -15,7 +15,6 @@ pub fn build(b: *std.Build) !void {
     const calculator = b.addModule("Calculator", .{
         .root_source_file = .{ .path = "src/Calculator.zig" },
     });
-    // calculator.addImport("Tokenizer", tokenizer);
     calculator.addImport("Stack", stack.module("Stack"));
     const io = b.addModule(
         "Io",
@@ -75,7 +74,6 @@ pub fn build(b: *std.Build) !void {
     native_build_step.dependOn(&native_exe_output.step);
 
     const calculator_options = b.addOptions();
-    // native_exe.root_module.addOptions("build_options", calculator_options);
     calculator.addOptions("build_options", calculator_options);
 
     // Creating executable run step
