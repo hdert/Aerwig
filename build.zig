@@ -12,14 +12,14 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const stack = b.dependency("stack", .{});
-    const tokenizer = b.addModule(
-        "Tokenizer",
-        .{ .root_source_file = .{ .path = "src/Tokenizer.zig" } },
-    );
+    // const tokenizer = b.addModule(
+    //     "Tokenizer",
+    //     .{ .root_source_file = .{ .path = "src/Tokenizer.zig" } },
+    // );
     const calculator = b.addModule("Calculator", .{
         .root_source_file = .{ .path = "src/Calculator.zig" },
     });
-    calculator.addImport("Tokenizer", tokenizer);
+    // calculator.addImport("Tokenizer", tokenizer);
     calculator.addImport("Stack", stack.module("Stack"));
     const io = b.addModule(
         "Io",
@@ -80,6 +80,7 @@ pub fn build(b: *std.Build) !void {
 
     const native_exe_options = b.addOptions();
     native_exe.root_module.addOptions("build_options", native_exe_options);
+    calculator.addOptions("build_options", native_exe_options);
 
     // Creating executable run step
 

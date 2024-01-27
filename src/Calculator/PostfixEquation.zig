@@ -6,17 +6,19 @@
 const std = @import("std");
 const testing = std.testing;
 const Stack = @import("Stack");
-const Tokenizer = @import("Tokenizer");
-const Calculator = @import("Calculator.zig");
-const Operator = Calculator.Operator;
-const Error = Calculator.Error;
+const Tokenizer = @import("Tokenizer.zig");
+const Definitions = @import("Definitions.zig");
+const Operator = Definitions.Operator;
+const Error = Definitions.Error;
+const KeywordInfo = Definitions.KeywordInfo;
 const InfixEquation = @import("InfixEquation.zig");
+const tracy = @import("tracy.zig");
 
 const Self = @This();
 
 data: []const u8,
 allocator: std.mem.Allocator,
-keywords: std.StringHashMap(Calculator.KeywordInfo),
+keywords: std.StringHashMap(KeywordInfo),
 
 /// When created using this method, the resultant struct must be freed
 pub fn init(equation: InfixEquation) !Self {
@@ -33,6 +35,8 @@ pub fn init(equation: InfixEquation) !Self {
 
 /// Evaluate a postfix expression.
 pub fn evaluate(self: Self) !f64 {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     var stack = Stack.Stack(f64).init(self.allocator);
     defer stack.free();
     var tokens = std.mem.tokenizeScalar(u8, self.data, ' ');
@@ -62,6 +66,8 @@ pub fn evaluate(self: Self) !f64 {
 }
 
 pub fn free(self: *const Self) void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     self.allocator.free(self.data);
 }
 
@@ -72,6 +78,8 @@ fn addOperatorToStack(
     operator: Operator,
     output: *std.ArrayList(u8),
 ) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     while (stack.len() > 0 and try stack.peek().higherOrEqual(operator)) {
         try output.append(' ');
         try output.append(@intFromEnum(stack.pop()));
@@ -81,6 +89,8 @@ fn addOperatorToStack(
 }
 
 fn findArgumentEnd(tokens: *Tokenizer) Tokenizer.Token {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     var paren_counter: isize = 0;
     while (true) {
         const token = tokens.next();
@@ -102,6 +112,8 @@ fn findArgumentEnd(tokens: *Tokenizer) Tokenizer.Token {
 }
 
 fn evaluateKeyword(self: Self, tokens: *Tokenizer, token_slice: []const u8) anyerror!f64 {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     const keyword = self.keywords.get(token_slice).?;
     switch (keyword) {
         .Command => unreachable,
@@ -145,6 +157,8 @@ fn evaluateKeyword(self: Self, tokens: *Tokenizer, token_slice: []const u8) anye
 
 /// Returns string that must be freed
 fn infixToPostfix(self: Self, equation: InfixEquation) ![]u8 {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     var stack = Stack.Stack(Operator).init(equation.allocator);
     defer stack.free();
     var output = std.ArrayList(u8).init(equation.allocator);
@@ -227,6 +241,8 @@ fn infixToPostfix(self: Self, equation: InfixEquation) ![]u8 {
 }
 
 fn calculate(number_1: f64, number_2: f64, operator: u8) Error!f64 {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     return switch (@as(Operator, @enumFromInt(operator))) {
         Operator.addition => number_1 + number_2,
         Operator.subtraction => number_1 - number_2,

@@ -1,6 +1,7 @@
 //! Tokenizes arithmetic expressions.
 //! Use by calling fn init([]const u8) Tokenizer
 //! Then call next() to get next token.
+const tracy = @import("tracy.zig");
 const Self = @This();
 
 buffer: []const u8,
@@ -16,6 +17,8 @@ const State = enum {
 };
 
 pub fn init(buffer: []const u8) Self {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     return Self{
         .buffer = buffer,
     };
@@ -23,6 +26,8 @@ pub fn init(buffer: []const u8) Self {
 
 /// Takes Self, returns Token.
 pub fn next(self: *Self) Token {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     var result = Token{
         .tag = .eol,
     };

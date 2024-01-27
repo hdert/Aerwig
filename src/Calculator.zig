@@ -17,139 +17,29 @@
 
 const std = @import("std");
 const Stack = @import("Stack");
-const Tokenizer = @import("Tokenizer");
-pub const InfixEquation = @import("InfixEquation.zig");
-pub const PostfixEquation = @import("PostfixEquation.zig");
+pub const Tokenizer = @import("Calculator/Tokenizer");
+pub const InfixEquation = @import("Calculator/InfixEquation.zig");
+pub const PostfixEquation = @import("Calculator/PostfixEquation.zig");
+const Definitions = @import("Calculator/Definitions.zig");
+pub const Error = Definitions.Error;
+pub const isError = Definitions.isError;
+pub const errorDescription = Definitions.errorDescription;
+pub const Operator = Definitions.Operator;
+pub const KeywordInfo = Definitions.KeywordInfo;
 const Allocator = std.mem.Allocator;
+pub const tracy = @import("Calculator/tracy.zig");
 
 const Self = @This();
 
 allocator: Allocator,
 keywords: std.StringHashMap(KeywordInfo),
 
-pub const Error = error{
-    InvalidOperator,
-    InvalidKeyword,
-    DivisionByZero,
-    EmptyInput,
-    SequentialOperators,
-    EndsWithOperator,
-    StartsWithOperator,
-    ParenEmptyInput,
-    ParenStartsWithOperator,
-    ParenEndsWithOperator,
-    ParenMismatched,
-    ParenMismatchedClose,
-    ParenMismatchedStart,
-    InvalidFloat,
-    FnUnexpectedArgSize,
-    FnArgBoundsViolated,
-    FnArgInvalid,
-    Comma,
-};
-
-pub fn isError(err: anyerror) bool {
-    return switch (err) {
-        Error.InvalidOperator,
-        Error.InvalidKeyword,
-        Error.DivisionByZero,
-        Error.EmptyInput,
-        Error.SequentialOperators,
-        Error.EndsWithOperator,
-        Error.StartsWithOperator,
-        Error.ParenEmptyInput,
-        Error.ParenStartsWithOperator,
-        Error.ParenEndsWithOperator,
-        Error.ParenMismatched,
-        Error.ParenMismatchedClose,
-        Error.ParenMismatchedStart,
-        Error.InvalidFloat,
-        Error.FnUnexpectedArgSize,
-        Error.FnArgBoundsViolated,
-        Error.FnArgInvalid,
-        Error.Comma,
-        => true,
-        else => false,
-    };
-}
-
-pub fn errorDescription(err: anyerror) anyerror![]const u8 {
-    const E = Error;
-    return switch (err) {
-        E.InvalidOperator,
-        E.Comma,
-        => "You have entered an invalid operator\n",
-        E.InvalidKeyword => "You have entered an invalid keyword\n",
-        E.DivisionByZero => "You cannot divide by zero\n",
-        E.EmptyInput => "You cannot have an empty input\n",
-        E.SequentialOperators => "You cannot enter sequential operators\n",
-        E.EndsWithOperator => "You cannot finish with an operator\n",
-        E.StartsWithOperator => "You cannot start with an operator\n",
-        E.ParenEmptyInput => "You cannot have an empty parenthesis block\n",
-        E.ParenStartsWithOperator => "You cannot start a parentheses block with an operator\n",
-        E.ParenEndsWithOperator => "You cannot end a parentheses block with an operator\n",
-        E.ParenMismatched,
-        E.ParenMismatchedClose,
-        E.ParenMismatchedStart,
-        => "You have mismatched parentheses!\n",
-        E.InvalidFloat => "You have entered an invalid number\n",
-        E.FnUnexpectedArgSize => "You haven't passed the correct number of arguments to this function\n",
-        E.FnArgBoundsViolated => "Your arguments aren't within the range that this function expected\n",
-        E.FnArgInvalid => "Your argument to this function is invalid\n",
-        else => return err,
-    };
-}
-
-pub const Operator = enum(u8) {
-    addition = '+',
-    subtraction = '-',
-    division = '/',
-    multiplication = '*',
-    exponentiation = '^',
-    modulus = '%',
-    left_paren = '(',
-    right_paren = ')',
-    _,
-
-    pub fn precedence(self: @This()) !u8 {
-        return switch (self) {
-            .left_paren => 1,
-            .addition => 2,
-            .subtraction => 2,
-            .multiplication => 3,
-            .division => 3,
-            .modulus => 3,
-            .exponentiation => 4,
-            .right_paren => 5,
-            else => Error.InvalidOperator,
-        };
-    }
-
-    pub fn higherOrEqual(self: @This(), operator: @This()) !bool {
-        return try self.precedence() >= try Operator.precedence(operator);
-    }
-};
-
-pub const KeywordInfo = union(enum) {
-    const FunctionInfo = struct {
-        arg_length: usize,
-        ptr: *const fn ([]f64) anyerror!f64,
-    };
-
-    /// Return
-    Command: anyerror,
-    /// Function
-    Function: FunctionInfo,
-    /// String
-    StrFunction: *const fn ([]const u8) anyerror!f64,
-    /// Constant
-    Constant: f64,
-};
-
 pub fn init(
     allocator: Allocator,
     KeywordRegistrars: ?[]const *const fn (*Self) Allocator.Error!void,
 ) !Self {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     var self = Self{
         .allocator = allocator,
         .keywords = std.StringHashMap(KeywordInfo).init(allocator),
@@ -162,6 +52,8 @@ pub fn init(
 }
 
 pub fn registerKeywords(self: *Self) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     try self.addKeywords(&.{
         "inf",
         "nan",
@@ -176,11 +68,15 @@ pub fn addKeywords(
     keys: []const []const u8,
     values: []const KeywordInfo,
 ) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     for (keys, values) |key, value|
         try self.keywords.put(key, value);
 }
 
 pub fn registerPreviousAnswer(self: *Self, prev_ans: f64) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     try self.addKeywords(
         &[_][]const u8{ "a", "ans", "answer" },
         &[_]KeywordInfo{
@@ -196,6 +92,8 @@ pub fn newInfixEquation(
     input: ?[]const u8,
     error_handler: anytype,
 ) !InfixEquation {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     return InfixEquation.fromString(
         input,
         self.allocator,
@@ -205,6 +103,8 @@ pub fn newInfixEquation(
 }
 
 pub fn evaluate(self: Self, input: ?[]const u8, error_handler: anytype) !f64 {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     return (try InfixEquation.fromString(
         input,
         self.allocator,
@@ -214,6 +114,8 @@ pub fn evaluate(self: Self, input: ?[]const u8, error_handler: anytype) !f64 {
 }
 
 pub fn evaluate_experimental(self: Self, input: ?[]const u8, error_handler: anytype) !f64 {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     return (try InfixEquation.fromString(
         input,
         self.allocator,
@@ -223,6 +125,8 @@ pub fn evaluate_experimental(self: Self, input: ?[]const u8, error_handler: anyt
 }
 
 pub fn free(self: *Self) void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     self.keywords.deinit();
 }
 

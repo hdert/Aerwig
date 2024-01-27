@@ -15,8 +15,11 @@
 //! - Write end-to-end testing for addons
 const std = @import("std");
 const Cal = @import("Calculator");
+const tracy = Cal.tracy;
 
 pub fn registerKeywords(equation: *Cal) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     try equation.addKeywords(&[_][]const u8{
         "sqrt",  "abs", "exp",     "exp2",
         "gcd",   "sin", "asin",    "sinh",

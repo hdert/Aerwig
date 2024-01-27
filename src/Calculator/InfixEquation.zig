@@ -5,26 +5,30 @@
 //! Or you can call evaluate_experimental() to do one step evaluation.
 const std = @import("std");
 const Stack = @import("Stack");
-const Tokenizer = @import("Tokenizer");
-const Calculator = @import("Calculator.zig");
-const Error = Calculator.Error;
-const Operator = Calculator.Operator;
+const Tokenizer = @import("Tokenizer.zig");
+const Definitions = @import("Definitions.zig");
+const Error = Definitions.Error;
+const Operator = Definitions.Operator;
+const KeywordInfo = Definitions.KeywordInfo;
 const PostfixEquation = @import("PostfixEquation.zig");
+const tracy = @import("tracy.zig");
 
 const Self = @This();
 
 data: []const u8,
 // stdout: ?std.fs.File.Writer = null,
 allocator: std.mem.Allocator,
-keywords: std.StringHashMap(Calculator.KeywordInfo),
+keywords: std.StringHashMap(KeywordInfo),
 error_info: ?[3]usize = null,
 
 pub fn fromString(
     input: ?[]const u8,
     allocator: std.mem.Allocator,
-    keywords: std.StringHashMap(Calculator.KeywordInfo),
+    keywords: std.StringHashMap(KeywordInfo),
     error_handler: anytype,
 ) !Self {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     var self = Self{
         .data = undefined,
         .allocator = allocator,
@@ -47,6 +51,8 @@ pub fn fromString(
 }
 
 pub fn toPostfixEquation(self: Self) !PostfixEquation {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     return PostfixEquation.init(self);
 }
 
@@ -56,6 +62,8 @@ pub fn toPostfixEquation(self: Self) !PostfixEquation {
 /// If InfixEquation has a valid stdout, prints errors to it using printError.
 /// Passes errors back to caller regardless of stdout being defined.
 pub fn evaluate(self: Self) !f64 {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     const postfixEquation = try self.toPostfixEquation();
     defer postfixEquation.free();
     return postfixEquation.evaluate();
@@ -64,6 +72,8 @@ pub fn evaluate(self: Self) !f64 {
 // Private functions
 
 fn validateKeyword(self: *Self, tokens: *Tokenizer, keyword: []const u8) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     const keywordInfo = self.keywords.get(keyword) orelse return Error.InvalidKeyword;
     var len: ?usize = null;
     var arg_counter: usize = 0;
@@ -104,6 +114,8 @@ fn validateKeyword(self: *Self, tokens: *Tokenizer, keyword: []const u8) !void {
 }
 
 fn validateArgument(self: *Self, tokens: *Tokenizer) anyerror!void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     const State = enum {
         float,
         start,
@@ -187,6 +199,8 @@ fn validateArgument(self: *Self, tokens: *Tokenizer) anyerror!void {
 }
 
 fn validateInput(self: *Self, input: ?[]const u8) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     self.data = input orelse return Error.EmptyInput;
     if (@import("builtin").os.tag == .windows) {
         self.data = std.mem.trimRight(u8, self.data, "\r");
@@ -203,6 +217,8 @@ fn addOperatorToStack(
     operator: Operator,
     output_stack: *Stack.Stack(f64),
 ) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     while (input_stack.len() > 0 and try input_stack.peek().higherOrEqual(operator)) {
         std.debug.assert(input_stack.len() > 0);
         try evaluateOperator(output_stack, input_stack.pop());
@@ -211,6 +227,8 @@ fn addOperatorToStack(
 }
 
 fn findArgumentEnd(tokens: *Tokenizer) Tokenizer.Token {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     var paren_counter: isize = 0;
     while (true) {
         const token = tokens.next();
@@ -232,6 +250,8 @@ fn findArgumentEnd(tokens: *Tokenizer) Tokenizer.Token {
 }
 
 fn evaluateKeyword(self: Self, tokens: *Tokenizer, token_slice: []const u8) anyerror!f64 {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     const keyword = self.keywords.get(token_slice).?;
     switch (keyword) {
         .Command => unreachable,
@@ -274,6 +294,8 @@ fn evaluateKeyword(self: Self, tokens: *Tokenizer, token_slice: []const u8) anye
 }
 
 fn evaluateOperator(stack: *Stack.Stack(f64), operator: Operator) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     const value = stack.pop();
     if (calculate(stack.pop(), value, @intFromEnum(operator))) |result| {
         try stack.push(result);
@@ -286,6 +308,8 @@ fn evaluateOperator(stack: *Stack.Stack(f64), operator: Operator) !void {
 }
 
 fn calculate(number_1: f64, number_2: f64, operator: u8) Error!f64 {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     return switch (@as(Operator, @enumFromInt(operator))) {
         Operator.addition => number_1 + number_2,
         Operator.subtraction => number_1 - number_2,
@@ -298,6 +322,8 @@ fn calculate(number_1: f64, number_2: f64, operator: u8) Error!f64 {
 }
 
 pub fn evaluate_experimental(self: Self) !f64 {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     var conversion_stack = Stack.Stack(Operator).init(self.allocator);
     defer conversion_stack.free();
     var evaluation_stack = Stack.Stack(f64).init(self.allocator);

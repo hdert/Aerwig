@@ -19,6 +19,7 @@
 //! - See if I can implement better stdin clearing with delimiter \000
 const std = @import("std");
 const Cal = @import("Calculator");
+const tracy = Cal.tracy;
 
 pub const Error = error{
     Help,
@@ -32,6 +33,8 @@ stdout: std.fs.File.Writer,
 stdin: std.fs.File.Reader,
 
 pub fn init(stdout: std.fs.File.Writer, stdin: std.fs.File.Reader) Self {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     return Self{
         .stdout = stdout,
         .stdin = stdin,
@@ -39,6 +42,8 @@ pub fn init(stdout: std.fs.File.Writer, stdin: std.fs.File.Reader) Self {
 }
 
 pub fn registerKeywords(equation: *Cal) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     try equation.addKeywords(&[_][]const u8{
         "h",
         "help",
@@ -63,6 +68,8 @@ pub fn registerKeywords(equation: *Cal) !void {
 }
 
 pub fn printResult(self: Self, result: f64) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     const abs_result = if (result < 0) -result else result;
     const small = abs_result < std.math.pow(f64, 10, -9);
     const big = abs_result > std.math.pow(f64, 10, 9);
@@ -119,6 +126,8 @@ pub fn handleError(
     location: ?[3]usize,
     equation: ?[]const u8,
 ) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     const stdout = self.stdout;
     try stdout.writeAll(try Cal.errorDescription(err));
     if (location) |l| {
@@ -139,6 +148,8 @@ pub fn handleError(
 
 /// This doesn't work very well, maybe a function help module would be nicer?
 pub fn printKeywords(self: Self, equation: Cal) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     var iterator = equation.keywords.iterator();
     while (true) {
         const entry = iterator.next() orelse break;
@@ -163,6 +174,8 @@ pub fn printKeywords(self: Self, equation: Cal) !void {
 
 /// Print out a nice default help.
 pub fn defaultHelp(self: Self) !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     try self.stdout.writeAll(
         \\Aerwig, An Expression Evaluator, Written In Zig, by Justin, © 2023-2024
         \\This calculator supports the standard order of operations, with the
