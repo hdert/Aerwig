@@ -69,58 +69,58 @@ const test_cases: testData = .{
         "1.e-1-1",                "1e1+1",
     },
     .postfix_equations = &[_][]const u8{
-        "10 10 +",                          "10 10 +",
-        "10 10 20 * +",                     "10 10 20 * +",
-        "10 10 /",                          "10 10 /",
-        "10 10 *",                          "10 10 *",
-        "10",                               "10.10 10.10 +",
-        "10.999",                           "10.789 10.123 *",
-        "10.123 10.123 +",                  "10.",
-        "10 10 2 / 3 * + 10 +",             "10 10 +",
-        "10. 10. +",                        "0",
-        "10",                               "-10",
-        "10 10 +",                          "10 10 * 10 +",
-        "123. 0.456 +",                     "0.123",
-        "0.",                               "123.",
-        "10 10 *",                          "10 10 * 10 *",
-        "10 10 *",                          "10 10 *",
-        "10 10 *",                          "10 10 10 * +",
-        "10.123 10 *",                      "10 10 *",
-        "10 10 *",                          "10 10 *",
-        "10 10 *",                          "10 10 *",
-        "10 10 *",                          "10 10 * 10 *",
-        "10 10 *",                          "10 10 * 10 *",
-        "10 10 *",                          "10 10 ^ 10 *",
-        "10 10 * 10 *",                     "-10",
-        "-0.",                              "-10",
-        "10 10 -",                          "0 10 -",
-        "0 -10 +",                          "10 -10 *",
-        "10 -10 -",                         "10 10 -",
-        "10 10 +",                          "10 0. -",
-        "10 10 -",                          "-0",
-        "-0.0",                             "-0.",
-        "0",                                "0.",
-        "0.0",                              "0.0",
-        "0.",                               "-0. 0 -",
-        "0. 0 -",                           "0.0 -0 -",
-        "0. -0 -",                          "0. 0. - 0 -",
-        "0. -0. -",                         "10",
-        "-1 10 5 + *",                      "10 5 +",
-        "10 10 5 + -",                      "10 -1 10 5 + * +",
-        "10 2 3 3 * + + 10 -",              "10. 10.456 *",
-        "0 0. * -0. -",                     "2 2 ^ 0. * -0. *",
-        "1e+30",                            "1e30",
-        "1e-30",                            "1.0e+30",
-        "1.0e30",                           "1.0e-30",
-        "1.0e-01",                          "1.0e01",
-        "1.0e+01",                          "1e01",
-        "1e+01",                            "1e-01",
-        "1.e01",                            "1 2.7182818284590452353 * 30 +",
-        "1.0 2.7182818284590452353 * 30 +", "1.0 2.7182818284590452353 * 30 +",
-        "1 2.7182818284590452353 *",        "2.7182818284590452353 30 +",
-        "2.7182818284590452353 30 *",       "2.7182818284590452353 30 -",
-        "1.e10 0.3 *",                      "1.e-1 10 -",
-        "1.e-1 1 -",                        "1e1 1 +",
+        "10 10 +",                      "10 10 +",
+        "10 10 20 * +",                 "10 10 20 * +",
+        "10 10 /",                      "10 10 /",
+        "10 10 *",                      "10 10 *",
+        "10",                           "10.10 10.10 +",
+        "10.999",                       "10.789 10.123 *",
+        "10.123 10.123 +",              "10.",
+        "10 10 2 / 3 * + 10 +",         "10 10 +",
+        "10. 10. +",                    "0",
+        "10",                           "-10",
+        "10 10 +",                      "10 10 * 10 +",
+        "123. 0.456 +",                 "0.123",
+        "0.",                           "123.",
+        "10 10 *",                      "10 10 * 10 *",
+        "10 10 *",                      "10 10 *",
+        "10 10 *",                      "10 10 10 * +",
+        "10.123 10 *",                  "10 10 *",
+        "10 10 *",                      "10 10 *",
+        "10 10 *",                      "10 10 *",
+        "10 10 *",                      "10 10 * 10 *",
+        "10 10 *",                      "10 10 * 10 *",
+        "10 10 *",                      "10 10 ^ 10 *",
+        "10 10 * 10 *",                 "-10",
+        "-0.",                          "-10",
+        "10 10 -",                      "0 10 -",
+        "0 -10 +",                      "10 -10 *",
+        "10 -10 -",                     "10 10 -",
+        "10 10 +",                      "10 0. -",
+        "10 10 -",                      "-0",
+        "-0.0",                         "-0.",
+        "0",                            "0.",
+        "0.0",                          "0.0",
+        "0.",                           "-0. 0 -",
+        "0. 0 -",                       "0.0 -0 -",
+        "0. -0 -",                      "0. 0. - 0 -",
+        "0. -0. -",                     "10",
+        "-1 10 5 + *",                  "10 5 +",
+        "10 10 5 + -",                  "10 -1 10 5 + * +",
+        "10 2 3 3 * + + 10 -",          "10. 10.456 *",
+        "0 0. * -0. -",                 "2 2 ^ 0. * -0. *",
+        "1e+30",                        "1e30",
+        "1e-30",                        "1.0e+30",
+        "1.0e30",                       "1.0e-30",
+        "1.0e-01",                      "1.0e01",
+        "1.0e+01",                      "1e01",
+        "1e+01",                        "1e-01",
+        "1.e01",                        "1 2.718281828459045 * 30 +",
+        "1.0 2.718281828459045 * 30 +", "1.0 2.718281828459045 * 30 +",
+        "1 2.718281828459045 *",        "2.718281828459045 30 +",
+        "2.718281828459045 30 *",       "2.718281828459045 30 -",
+        "1.e10 0.3 *",                  "1.e-1 10 -",
+        "1.e-1 1 -",                    "1e1 1 +",
     },
     .inputs = &[_]f64{
         0,   0,  0,  0,  0,  0,  0,     0,
@@ -314,8 +314,9 @@ test "InfixEquation.evaluate_indepth" {
 }
 
 fn infixEquationToPostfixEquationTest(alloc: Allocator) !void {
-    var eq = try c.init(alloc, null, null);
+    var eq = try c.init(alloc, null);
     defer eq.free();
+    try eq.addKeywords(&.{"e"}, &.{c.KeywordInfo{ .Constant = std.math.e }});
     for (
         test_cases.infix_equations,
         test_cases.postfix_equations,
@@ -326,7 +327,7 @@ fn infixEquationToPostfixEquationTest(alloc: Allocator) !void {
         const postfixEquation = try infixEquation.toPostfixEquation();
         defer postfixEquation.free();
         try testing.expectEqualSlices(u8, postfix, postfixEquation.data);
-        const postfixEquation2 = try c.PostfixEquation.fromInfixEquation(infixEquation);
+        const postfixEquation2 = try c.PostfixEquation.init(infixEquation);
         defer postfixEquation2.free();
         try testing.expectEqualSlices(u8, postfix, postfixEquation2.data);
     }
@@ -334,9 +335,9 @@ fn infixEquationToPostfixEquationTest(alloc: Allocator) !void {
 
 test "InfixEquation.toPostfixEquation" {
     if (check_allocation_failures) {
-        try testing.checkAllAllocationFailures(allocator, infixEquationEvaluateTest, .{});
+        try testing.checkAllAllocationFailures(allocator, infixEquationToPostfixEquationTest, .{});
     } else {
-        try infixEquationEvaluateTest(allocator);
+        try infixEquationToPostfixEquationTest(allocator);
     }
 }
 
