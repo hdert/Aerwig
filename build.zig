@@ -268,7 +268,7 @@ pub fn build(b: *std.Build) !void {
 
     const loop_exe = b.addExecutable(.{
         .name = "loop",
-        .root_source_file = .{ .path = "src/performance_testing/loop.zig" },
+        .root_source_file = .{ .path = "performance_testing/loop.zig" },
         .target = target,
         .optimize = optimize,
     });

@@ -27,14 +27,14 @@ pub fn main() !void {
 
     var calculator = try Calculator.init(allocator, &.{Addons.registerKeywords});
     defer calculator.free();
-    try calculator.registerPreviousAnswer(0);
+    // try calculator.registerPreviousAnswer(0); // We don't need this since we are comparing against python
     const err_handler = error_handler{};
 
     var timer = try std.time.Timer.start();
     while (loops > 0) : (loops -= 1) {
-        try calculator.registerPreviousAnswer(
-            try calculator.evaluate(input, err_handler),
-        );
+        // try calculator.registerPreviousAnswer(
+        _ = try calculator.evaluate(input, err_handler);
+        // );
     }
     const time = timer.read();
 
