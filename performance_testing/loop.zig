@@ -3,6 +3,7 @@ const Calculator = @import("Calculator");
 const Addons = @import("Addons");
 const build_options = @import("build_options");
 const use_next = build_options.use_next;
+const tracy = Calculator.tracy;
 
 const error_handler = struct {
     pub fn handleError(
@@ -17,6 +18,8 @@ const error_handler = struct {
 };
 
 pub fn main() !void {
+    const tracy_zone = tracy.trace(@src());
+    defer tracy_zone.end();
     // const input = "100+sin(2pi)/10+sum(a,a,a,a,a,a,a,a,a,a,a,a)+average(sin(2pi), cos(2pi))^1";
     const input = "100+2/10+1+1+1+1+1+1+1+1+1+1+1+2+2^1";
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -39,7 +42,7 @@ pub fn main() !void {
     const time = timer.read();
 
     std.debug.print(
-        "\nZig {s}: Runs: {}, Time: {d}s, Average Time per run: {d}ms\n",
+        "\nZig {s}: Runs: {}, Time: {d}s, Average Time per run: {d}µs\n",
         .{
             if (build_options.use_next) "next" else "current",
             loop_amount,
