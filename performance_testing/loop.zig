@@ -38,9 +38,10 @@ pub fn main() !void {
     }
     const time = timer.read();
 
-    std.log.err(
-        "Runs: {}, Time: {d}s, Average Time per run: {d}ms",
+    std.debug.print(
+        "\nZig {s}: Runs: {}, Time: {d}s, Average Time per run: {d}ms\n",
         .{
+            if (build_options.use_next) "next" else "current",
             loop_amount,
             @as(f64, @floatFromInt(time)) / std.time.ns_per_s,
             @as(f64, @floatFromInt(time)) / loop_amount / std.time.ns_per_us,

@@ -263,7 +263,7 @@ if __name__ == '__main__':
     end_time = time.perf_counter_ns()
     time = end_time - start_time
 
-    print(f"Runs: {loop_amount}, Time: {time / 1_000_000_000}s, Average Time per run: {time / loop_amount / 1_000}ms")
+    print(f"Python: Runs: {loop_amount}, Time: {time / 1_000_000_000}s, Average Time per run: {time / loop_amount / 1_000}ms")
 
     # Uncomment the call to testmod to run the tests
     # Can enter an infinite loop if your Stack isn't implemented correctly

@@ -33,5 +33,5 @@ int main(void)
     unsigned long long int end_time = nanos();
     unsigned long long int time = end_time - start_time;
 
-    printf("Runs: %d, Time: %lfs, Average Time per run: %lfms", loop_amount, (double)time / 1000000000, (double)time / loop_amount / 1000);
+    printf("C Native: Runs: %d, Time: %lfs, Average Time per run: %lfms", loop_amount, (double)time / 1000000000, (double)time / loop_amount / 1000);
 }

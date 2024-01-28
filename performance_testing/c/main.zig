@@ -30,7 +30,7 @@ pub fn main() !void {
     const time = @as(f64, @floatFromInt(timer.read()));
 
     std.debug.print(
-        "Runs: {}, Time: {d}s, Average Time per run: {d}ms\n",
+        "C from Zig: Runs: {}, Time: {d}s, Average Time per run: {d}ms\n",
         .{
             loop_amount - loops,
             time / std.time.ns_per_s,

@@ -7,7 +7,6 @@
 //! - Create tests for Tokenizer
 //!     - Depends on whether the code ever changes, and whether
 //!     the public method testing covers it.
-//! - Find way to do performance testing
 //! - Find way to do end-to-end testing with custom file reader
 //!     - Use result generator and writer to test entire user text
 //!     to ensure that it never changes, and if it does, to highlight it
