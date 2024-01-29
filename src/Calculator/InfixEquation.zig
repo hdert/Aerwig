@@ -18,6 +18,8 @@ data: []const u8,
 allocator: std.mem.Allocator,
 keywords: std.StringHashMap(KeywordInfo),
 error_info: ?[3]usize = null,
+conversion_stack: ?*Stack.Stack(Operator) = null,
+evaluation_stack: ?*Stack.Stack(f64) = null,
 
 pub fn fromString(
     input: ?[]const u8,
@@ -199,13 +201,13 @@ fn validateInput(self: *Self, input: ?[]const u8) !void {
 
 fn addOperatorToStack(
     input_stack: *Stack.Stack(Operator),
+    input_stack_base_length: usize,
     operator: Operator,
     output_stack: *Stack.Stack(f64),
 ) !void {
     const tracy_zone = tracy.trace(@src());
     defer tracy_zone.end();
-    while (input_stack.len() > 0 and try input_stack.peek().higherOrEqual(operator)) {
-        std.debug.assert(input_stack.len() > 0);
+    while (input_stack.len() > input_stack_base_length and try input_stack.peek().higherOrEqual(operator)) {
         try evaluateOperator(output_stack, input_stack.pop());
     }
     try input_stack.push(operator);
@@ -234,7 +236,13 @@ fn findArgumentEnd(tokens: *Tokenizer) Tokenizer.Token {
     }
 }
 
-fn evaluateKeyword(self: Self, tokens: *Tokenizer, token_slice: []const u8) anyerror!f64 {
+fn evaluateKeyword(
+    self: Self,
+    tokens: *Tokenizer,
+    token_slice: []const u8,
+    conversion_stack: *Stack.Stack(Operator),
+    evaluation_stack: *Stack.Stack(f64),
+) anyerror!f64 {
     const tracy_zone = tracy.trace(@src());
     defer tracy_zone.end();
     const keyword = self.keywords.get(token_slice).?;
@@ -253,6 +261,8 @@ fn evaluateKeyword(self: Self, tokens: *Tokenizer, token_slice: []const u8) anye
                     .data = tokens.buffer[start..token.start],
                     .allocator = self.allocator,
                     .keywords = self.keywords,
+                    .conversion_stack = conversion_stack,
+                    .evaluation_stack = evaluation_stack,
                 };
                 try args.append(try infix.evaluate());
                 if (token.tag == .right_paren) break;
@@ -310,10 +320,20 @@ fn calculate(number_1: f64, number_2: f64, operator: u8) Error!f64 {
 pub fn evaluate(self: Self) !f64 {
     const tracy_zone = tracy.trace(@src());
     defer tracy_zone.end();
-    var conversion_stack = Stack.Stack(Operator).init(self.allocator);
-    defer conversion_stack.free();
-    var evaluation_stack = Stack.Stack(f64).init(self.allocator);
-    defer evaluation_stack.free();
+    var conversion_stack_backing = if (self.conversion_stack == null)
+        Stack.Stack(Operator).init(self.allocator)
+    else
+        undefined;
+    defer if (self.conversion_stack == null) conversion_stack_backing.free();
+    var evaluation_stack_backing = if (self.evaluation_stack == null)
+        Stack.Stack(f64).init(self.allocator)
+    else
+        undefined;
+    defer if (self.evaluation_stack == null) evaluation_stack_backing.free();
+    var conversion_stack: *Stack.Stack(Operator) = if (self.conversion_stack) |stack| stack else &conversion_stack_backing;
+    var evaluation_stack: *Stack.Stack(f64) = if (self.evaluation_stack) |stack| stack else &evaluation_stack_backing;
+    const conversion_stack_start_length = conversion_stack.len();
+    const evaluation_stack_start_length = evaluation_stack.len();
     var tokens = Tokenizer.init(self.data);
     const State = enum { none, negative, float };
     var state = State.none;
@@ -334,9 +354,10 @@ pub fn evaluate(self: Self) !f64 {
                     .negative => try evaluation_stack.push(-number),
                     .float => {
                         try addOperatorToStack(
-                            &conversion_stack,
+                            conversion_stack,
+                            conversion_stack_start_length,
                             .multiplication,
-                            &evaluation_stack,
+                            evaluation_stack,
                         );
                         try evaluation_stack.push(number);
                     },
@@ -344,15 +365,16 @@ pub fn evaluate(self: Self) !f64 {
                 state = .float;
             },
             .keyword => {
-                const result = try self.evaluateKeyword(&tokens, token.slice);
+                const result = try self.evaluateKeyword(&tokens, token.slice, conversion_stack, evaluation_stack);
                 switch (state) {
                     .none => try evaluation_stack.push(result),
                     .negative => try evaluation_stack.push(-result),
                     .float => {
                         try addOperatorToStack(
-                            &conversion_stack,
+                            conversion_stack,
+                            conversion_stack_start_length,
                             .multiplication,
-                            &evaluation_stack,
+                            evaluation_stack,
                         );
                         try evaluation_stack.push(result);
                     },
@@ -365,9 +387,10 @@ pub fn evaluate(self: Self) !f64 {
                 .float => {
                     state = .none;
                     try addOperatorToStack(
-                        &conversion_stack,
+                        conversion_stack,
+                        conversion_stack_start_length,
                         .subtraction,
-                        &evaluation_stack,
+                        evaluation_stack,
                     );
                 },
             },
@@ -377,16 +400,18 @@ pub fn evaluate(self: Self) !f64 {
                     .negative => {
                         try evaluation_stack.push(-1);
                         try addOperatorToStack(
-                            &conversion_stack,
+                            conversion_stack,
+                            conversion_stack_start_length,
                             .multiplication,
-                            &evaluation_stack,
+                            evaluation_stack,
                         );
                     },
                     .float => {
                         try addOperatorToStack(
-                            &conversion_stack,
+                            conversion_stack,
+                            conversion_stack_start_length,
                             .multiplication,
-                            &evaluation_stack,
+                            evaluation_stack,
                         );
                     },
                 }
@@ -395,25 +420,26 @@ pub fn evaluate(self: Self) !f64 {
             },
             .right_paren => {
                 while (conversion_stack.peek() != Operator.left_paren) {
-                    try evaluateOperator(&evaluation_stack, conversion_stack.pop());
+                    try evaluateOperator(evaluation_stack, conversion_stack.pop());
                 }
                 _ = conversion_stack.pop();
                 state = .float;
             },
             .operator => {
                 try addOperatorToStack(
-                    &conversion_stack,
+                    conversion_stack,
+                    conversion_stack_start_length,
                     @enumFromInt(token.slice[0]),
-                    &evaluation_stack,
+                    evaluation_stack,
                 );
                 state = .none;
             },
             else => unreachable,
         }
     }
-    while (conversion_stack.len() > 0) {
-        try evaluateOperator(&evaluation_stack, conversion_stack.pop());
+    while (conversion_stack.len() > conversion_stack_start_length) {
+        try evaluateOperator(evaluation_stack, conversion_stack.pop());
     }
-    std.debug.assert(evaluation_stack.len() == 1);
+    std.debug.assert(evaluation_stack.len() == evaluation_stack_start_length + 1);
     return evaluation_stack.pop();
 }

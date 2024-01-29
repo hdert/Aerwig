@@ -32,6 +32,8 @@ const Self = @This();
 
 allocator: Allocator,
 keywords: std.StringHashMap(KeywordInfo),
+conversion_stack: Stack.Stack(Operator),
+evaluation_stack: Stack.Stack(f64),
 
 pub fn init(
     allocator: Allocator,
@@ -42,6 +44,8 @@ pub fn init(
     var self = Self{
         .allocator = allocator,
         .keywords = std.StringHashMap(KeywordInfo).init(allocator),
+        .conversion_stack = Stack.Stack(Operator).init(allocator),
+        .evaluation_stack = Stack.Stack(f64).init(allocator),
     };
     if (KeywordRegistrars) |registrars|
         for (registrars) |registrar|
@@ -101,21 +105,26 @@ pub fn newInfixEquation(
     );
 }
 
-pub fn evaluate(self: Self, input: ?[]const u8, error_handler: anytype) !f64 {
+pub fn evaluate(self: *Self, input: ?[]const u8, error_handler: anytype) !f64 {
     const tracy_zone = tracy.trace(@src());
     defer tracy_zone.end();
-    return (try InfixEquation.fromString(
+    var infix_equation = try InfixEquation.fromString(
         input,
         self.allocator,
         self.keywords,
         error_handler,
-    )).evaluate();
+    );
+    infix_equation.conversion_stack = &self.conversion_stack;
+    infix_equation.evaluation_stack = &self.evaluation_stack;
+    return infix_equation.evaluate();
 }
 
 pub fn free(self: *Self) void {
     const tracy_zone = tracy.trace(@src());
     defer tracy_zone.end();
     self.keywords.deinit();
+    self.conversion_stack.free();
+    self.evaluation_stack.free();
 }
 
 test "PostfixEquation" {
